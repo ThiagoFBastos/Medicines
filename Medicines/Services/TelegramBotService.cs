@@ -80,7 +80,7 @@ namespace Medicines.Services
                     }
                     else
                     {
-                        await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}aMotivo: {resultUser.Error}");
+                        await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {resultUser.Error}");
                     }
                 }
             }
@@ -119,9 +119,16 @@ namespace Medicines.Services
                 int minutes = int.Parse(match.Groups[4].Value);
                 var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hour, minutes, 0);
 
-                await _medicinesService.AddMedicineAsync(medicine, quantity, scheduledTime.ToLocalTime(), msg.From!.Id);
+                var addResult = await _medicinesService.AddMedicineAsync(medicine, quantity, scheduledTime.ToLocalTime(), msg.From!.Id);
 
-                await _bot.SendMessage(msg.Chat, $"{username}, você adicionou o remédio {medicine} com quantidade {quantity} no horário {scheduledTime.TimeOfDay}");
+                if(addResult.IsSuccess)
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, você adicionou o remédio {medicine} com quantidade {quantity} no horário {scheduledTime:HH:mm}");
+                }
+                else
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, {addResult.Error}");
+                }
             }
             else
             {
@@ -154,9 +161,16 @@ namespace Medicines.Services
             {
                 string medicine = match.Groups[1].Value;
 
-                await _medicinesService.DeleteMedicineAsync(medicine, msg.From.Id);
+                var deleteResult = await _medicinesService.DeleteMedicineAsync(medicine, msg.From.Id);
 
-                await _bot.SendMessage(msg.Chat, $"{username}, você removeu o remédio {medicine}");
+                if (deleteResult.IsSuccess)
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, você removeu o remédio {medicine}");
+                }
+                else
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, {deleteResult.Error}");
+                }
             }
             else
             {
@@ -189,14 +203,23 @@ namespace Medicines.Services
             {
                 string medicine = match.Groups[1].Value;
 
-                var medicineInfo = await _medicinesService.GetMedicineByNameAsync(medicine, msg.From!.Id);
+                var getResult = await _medicinesService.GetMedicineByNameAsync(medicine, msg.From!.Id);
 
-                await _bot.SendHtml(msg.Chat, $"""
-                   {username}, você procurou pelo remédio {medicine}:
-                   • <b>Nome:</b> {medicineInfo?.Name}
-                   • <b>Quantidade:</b> {medicineInfo?.PillsQuantity}
-                   • <b>Horário:</b> {medicineInfo?.ScheduledTime:HH:mm}
-                """);
+                if (getResult.IsSuccess)
+                {
+                    var medicineInfo = getResult.Value;
+
+                    await _bot.SendHtml(msg.Chat, $"""
+                       {username}, você procurou pelo remédio {medicine}:
+                       • <b>Nome:</b> {medicineInfo?.Name}
+                       • <b>Quantidade:</b> {medicineInfo?.PillsQuantity}
+                       • <b>Horário:</b> {medicineInfo?.ScheduledTime:HH:mm}
+                    """);
+                }
+                else
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, {getResult.Error}");
+                }
             }
             else
             {
@@ -221,23 +244,32 @@ namespace Medicines.Services
 
             var username = user?.Username ?? "Usuário";
 
-            var medicines = await _medicinesService.GetAllMedicinesAsync(msg.From!.Id);
+            var getResult = await _medicinesService.GetAllMedicinesAsync(msg.From!.Id);
 
-            var details = medicines.Select(med =>
-                $"""
+            if (getResult.IsSuccess)
+            {
+                var medicines = getResult.Value!;
+
+                var details = medicines.Select(med =>
+                    $"""
                   • <b>Nome</b>: {med.Name}
                   • <b>Quantidade</b>: {med.PillsQuantity}
                   • <b>Horário</b>: {med.ScheduledTime:HH:mm}
                 """
-            ).ToList();
+                ).ToList();
 
-            var detailsResult = string.Join("\n\n", details);
+                var detailsResult = string.Join("\n\n", details);
 
-            await _bot.SendHtml(msg.Chat, 
-            $"""
+                await _bot.SendHtml(msg.Chat,
+                $"""
                 {username}, foram encontrados {details.Count} remédios disponíveis:
                 {detailsResult}
-            """);
+                """);
+            }
+            else
+            {
+                await _bot.SendMessage(msg.Chat, $"{username}, {getResult.Error}");
+            }
         }
 
         public async Task OnError(Exception exception, HandleErrorSource source)
