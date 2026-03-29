@@ -16,7 +16,7 @@
 - Docker
 - Docker Compose
 - Postgres
-- Work Class
+- Worker Class
 - telegrambots
 - Entity Framework Core
 
