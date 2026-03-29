@@ -42,7 +42,7 @@ namespace Medicines.Services
             Os seguintes comandos estão disponíveis:
 
             • <b>/start [username]</b> - Inicia a interação com o bot e registra o usuário com o nome de usuário especificado.
-            • <b>/add [remédio] [quantidade]</b> - Adiciona um remédio com a quantidade especificada.
+            • <b>/add [remédio] [quantidade] [horário] </b> - Adiciona um remédio com a quantidade especificada e um horário para tomar.
             • <b>/remove [remédio]</b> - Remove um remédio da lista.
             • <b>/lookup [remédio]</b> - Procura por um remédio específico.
             • <b>/list</b> - Exibe a lista de remédios.
@@ -63,15 +63,25 @@ namespace Medicines.Services
             {
                 var username = match.Groups[1].Value;
 
-                if (await _userService.AddUserAsync(msg.From!.Id, username))
+                var result = await _userService.AddUserAsync(msg.From!.Id, username);
+
+                if (result.IsSuccess)
                 {
                     await _bot.SendMessage(msg.Chat, $"Seja bem vindo ao Medicines, {username}!");
                 }
                 else
                 {
-                    var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+                    var resultUser = await _userService.GetUserByUserIdAsync(msg.From!.Id);
 
-                    await _bot.SendMessage(msg.Chat, $"Você já está registrado no Medicines, {user.Username}!");
+                    if (resultUser.IsSuccess)
+                    {
+                        var user = resultUser.Value;
+                        await _bot.SendMessage(msg.Chat, $"{user!.Username}, {result.Error}!");
+                    }
+                    else
+                    {
+                        await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}aMotivo: {resultUser.Error}");
+                    }
                 }
             }
             else
@@ -89,7 +99,15 @@ namespace Medicines.Services
 
             var match = Regex.Match(text, @"^/add\s+(\w+)\s+(\d+)\s+(\d{2}):(\d{2})$");
 
-            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+            var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            if (!result.IsSuccess)
+            {
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                return;
+            }
+
+            var user = result.Value;
 
             var username = user?.Username ?? "Usuário";
 
@@ -120,7 +138,15 @@ namespace Medicines.Services
 
             var match = Regex.Match(text, @"^/remove\s+(\w+)$");
 
-            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+            var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            if (!result.IsSuccess)
+            {
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                return;
+            }
+
+            var user = result.Value;
 
             var username = user?.Username ?? "Usuário";
 
@@ -147,7 +173,15 @@ namespace Medicines.Services
 
             var match = Regex.Match(text, @"^/lookup\s+(\w+)$");
 
-            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+            var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            if (!result.IsSuccess)
+            {
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                return;
+            }
+
+            var user = result.Value;
 
             var username = user?.Username ?? "Usuário";
 
@@ -175,7 +209,15 @@ namespace Medicines.Services
             if (msg is null)
                 return;
 
-            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+            var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            if (!result.IsSuccess)
+            {
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                return;
+            }
+
+            var user = result.Value;
 
             var username = user?.Username ?? "Usuário";
 
@@ -189,12 +231,12 @@ namespace Medicines.Services
                 """
             ).ToList();
 
-            var result = string.Join("\n\n", details);
+            var detailsResult = string.Join("\n\n", details);
 
             await _bot.SendHtml(msg.Chat, 
             $"""
                 {username}, foram encontrados {details.Count} remédios disponíveis:
-                {result}
+                {detailsResult}
             """);
         }
 

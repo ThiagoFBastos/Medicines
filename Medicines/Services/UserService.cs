@@ -1,5 +1,6 @@
 ﻿using Medicines.Interfaces;
 using Medicines.Models;
+using Medicines.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,68 +20,119 @@ namespace Medicines.Services
             _logger = logger;
         }
 
-        public async Task<bool> AddUserAsync(long userId, string username)
+        public async Task<Result<bool, string>> AddUserAsync(long userId, string username)
         {
-            if (await GetUserByUserIdAsync(userId) is not null)
+            try
             {
-                _logger.LogWarning($"User with userId {userId} already exists.");
-                return false;
+                var result = await GetUserByUserIdAsync(userId);
+
+                if (result.Value is not null)
+                {
+                    _logger.LogWarning($"User with userId {userId} already exists.");
+                    return Result<bool, string>.Failure($"O usuário com id {userId} já existe");
+                }
+
+                var user = new User
+                {
+                    UserId = userId,
+                    Username = username
+                };
+
+                _repositoryManager.UserRepository.AddUser(user);
+                await _repositoryManager.SaveAsync();
+
+                return Result<bool, string>.Success(true);
             }
-
-            var user = new User
+            catch (Exception ex)
             {
-                UserId = userId,
-                Username = username
-            };
-
-            _repositoryManager.UserRepository.AddUser(user);
-            await _repositoryManager.SaveAsync();
-
-            return false;
-        }
-
-        public async Task<bool> DeleteUserAsync(long userId)
-        {
-            var user = await GetUserByUserIdAsync(userId);
-
-            if (user is null)
-            {
-                _logger.LogWarning($"User with userId {userId} not exists.");
-                return false;
+                _logger.LogError(ex, $"An error occurred while adding user with userId {userId}.");
+                return Result<bool, string>.Failure($"Ocorreu um erro ao adicionar o usuário com id {userId}");
             }
-
-            _repositoryManager.UserRepository.DeleteUser(user);
-            await _repositoryManager.SaveAsync();
-
-            return true;
         }
 
-        public Task<IEnumerable<User>> GetAllUsersAsync()
+        public async Task<Result<bool, string>> DeleteUserAsync(long userId)
         {
-            return _repositoryManager.UserRepository.GetAllUsersAsync();
-        }
-
-        public Task<User?> GetUserByUserIdAsync(long userId)
-        {
-            return _repositoryManager.UserRepository.GetUserByUserIdAsync(userId);
-        }
-
-        public async Task<bool> UpdateUserAsync(long userId, string username)
-        {
-            var user = await GetUserByUserIdAsync(userId);
-
-            if (user is null)
+            try
             {
-                _logger.LogWarning($"User with userId {userId} not exists.");
-                return false;
+                var result = await GetUserByUserIdAsync(userId);
+
+                var user = result.Value;
+
+                if (user is null)
+                {
+                    _logger.LogWarning($"User with userId {userId} not exists.");
+                    return Result<bool, string>.Failure($"O usuário com id {userId} não existe");
+                }
+
+                _repositoryManager.UserRepository.DeleteUser(user);
+                await _repositoryManager.SaveAsync();
+
+                return Result<bool, string>.Success(true);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while deleting user with userId {userId}.");
+                return Result<bool, string>.Failure($"Ocorreu um erro ao deletar o usuário com id {userId}");
+            }
+        }
 
-            user.Username = username;
+        public async Task<Result<IEnumerable<User>, string>> GetAllUsersAsync()
+        {
+            try
+            {
+                return Result<IEnumerable<User>, string>.Success(await _repositoryManager.UserRepository.GetAllUsersAsync());
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while getting all users.");
+                return Result<IEnumerable<User>, string>.Failure("Ocorreu um erro ao obter todos os usuários");
+            }
+        }
 
-            _repositoryManager.UserRepository.UpdateUser(user);
-            await _repositoryManager.SaveAsync();
+        public async Task<Result<User?, string>> GetUserByUserIdAsync(long userId)
+        {
+            try
+            {
+                var user = await _repositoryManager.UserRepository.GetUserByUserIdAsync(userId);
 
-            return true;
+                if (user is null)
+                    return Result<User?, string>.Failure($"Usuário com id {userId} não encontrado");
+
+                return Result<User?, string>.Success(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while getting user with userId {userId}.");
+                return Result<User?, string>.Failure($"Ocorreu um erro ao obter o usuário com id {userId}");
+            }
+        }
+
+        public async Task<Result<bool, string>> UpdateUserAsync(long userId, string username)
+        {
+            try
+            {
+                var result = await GetUserByUserIdAsync(userId);
+
+                var user = result.Value;
+
+                if (user is null)
+                {
+                    _logger.LogWarning($"User with userId {userId} not exists.");
+                    return Result<bool, string>.Failure($"O usuário com id {userId} não existe");
+                }
+
+                user.Username = username;
+
+                _repositoryManager.UserRepository.UpdateUser(user);
+                await _repositoryManager.SaveAsync();
+
+                return Result<bool, string>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while updating user with userId {userId}.");
+                return Result<bool, string>.Failure($"Ocorreu um erro ao atualizar o usuário com id {userId}");
+            }
         }
     }
 }

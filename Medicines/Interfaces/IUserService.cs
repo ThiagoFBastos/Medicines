@@ -1,4 +1,5 @@
 ﻿using Medicines.Models;
+using Medicines.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,14 +10,14 @@ namespace Medicines.Interfaces
 {
     public interface IUserService
     {
-        Task<User?> GetUserByUserIdAsync(long userId);
+        Task<Result<User?, string>> GetUserByUserIdAsync(long userId);
 
-        Task<bool> AddUserAsync(long userId, string username);
+        Task<Result<bool, string>> AddUserAsync(long userId, string username);
 
-        Task<bool> UpdateUserAsync(long userId, string username);
+        Task<Result<bool, string>> UpdateUserAsync(long userId, string username);
 
-        Task<bool> DeleteUserAsync(long userId);
+        Task<Result<bool, string>> DeleteUserAsync(long userId);
 
-        Task<IEnumerable<User>> GetAllUsersAsync();
+        Task<Result<IEnumerable<User>, string>> GetAllUsersAsync();
     }
 }
