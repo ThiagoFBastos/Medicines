@@ -23,6 +23,9 @@ namespace Medicines.Extensions
         public static void ConvigureMedicinesService(this IServiceCollection services)
             => services.AddScoped<IMedicinesService, MedicinesService>();
 
+        public static void ConfigureUserService(this IServiceCollection services)
+            => services.AddScoped<IUserService, UserService>();
+
         public static void ConfigureRepositories(this IServiceCollection services)
             => services.AddScoped<IRepositoryManager, RepositoryManager>();
 

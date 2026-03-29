@@ -11,6 +11,8 @@ namespace Medicines.Interfaces
     {
         IMedicineRepository MedicineRepository { get; }
 
+        IUserRepository UserRepository { get; }
+
         Task SaveAsync();
     }
 }

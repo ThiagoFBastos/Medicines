@@ -20,8 +20,9 @@ namespace Medicines.Services
         private readonly ILogger<TelegramBotService> _logger;
         private readonly TelegramBotOptions _options;
         private readonly IMedicinesService _medicinesService;
+        private readonly IUserService _userService;
 
-        public TelegramBotService(ILogger<TelegramBotService> logger, IOptions<TelegramBotOptions> options, IMedicinesService medicinesService)
+        public TelegramBotService(ILogger<TelegramBotService> logger, IOptions<TelegramBotOptions> options, IMedicinesService medicinesService, IUserService userService)
         {
             _logger = logger;
             _cts = new CancellationTokenSource();
@@ -32,6 +33,7 @@ namespace Medicines.Services
             _bot.OnMessage += OnMessage;
             _bot.OnUpdate += OnUpdate;
             _medicinesService = medicinesService;
+            _userService = userService;
         }
 
         public async Task Help(Chat chat)
@@ -39,6 +41,7 @@ namespace Medicines.Services
             await _bot.SendHtml(chat, """
             Os seguintes comandos estão disponíveis:
 
+            • <b>/start [username]</b> - Inicia a interação com o bot e registra o usuário com o nome de usuário especificado.
             • <b>/add [remédio] [quantidade]</b> - Adiciona um remédio com a quantidade especificada.
             • <b>/remove [remédio]</b> - Remove um remédio da lista.
             • <b>/lookup [remédio]</b> - Procura por um remédio específico.
@@ -52,9 +55,29 @@ namespace Medicines.Services
             if (msg is null)
                 return;
 
-            var username = msg.From?.Username ?? "Usuário";
+            var text = msg.Text!.Trim();
 
-            await _bot.SendMessage(msg.Chat, $"Seja bem vindo ao Medicines, {username}!");
+            var match = Regex.Match(text, @"^/start\s+([A-Za-z0-9\._]+)$");
+
+            if (match.Success)
+            {
+                var username = match.Groups[1].Value;
+
+                if (await _userService.AddUserAsync(msg.From!.Id, username))
+                {
+                    await _bot.SendMessage(msg.Chat, $"Seja bem vindo ao Medicines, {username}!");
+                }
+                else
+                {
+                    var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+                    await _bot.SendMessage(msg.Chat, $"Você já está registrado no Medicines, {user.Username}!");
+                }
+            }
+            else
+            {
+                await Help(msg.Chat);
+            }
         }
 
         public async Task AddAsync(Message msg, UpdateType type)
@@ -66,7 +89,9 @@ namespace Medicines.Services
 
             var match = Regex.Match(text, @"^/add\s+(\w+)\s+(\d+)\s+(\d{2}):(\d{2})$");
 
-            var username = msg.From?.Username ?? "Usuário";
+            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            var username = user?.Username ?? "Usuário";
 
             if (match.Success)
             {
@@ -75,11 +100,10 @@ namespace Medicines.Services
                 int hour = int.Parse(match.Groups[3].Value);
                 int minutes = int.Parse(match.Groups[4].Value);
                 var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hour, minutes, 0);
-                
 
                 await _medicinesService.AddMedicineAsync(medicine, quantity, scheduledTime.ToLocalTime(), msg.From!.Id);
 
-                await _bot.SendMessage(msg.Chat, $"{username}, você adicionou o remédio {medicine} com quantidade {quantity} no horário {scheduledTime}");
+                await _bot.SendMessage(msg.Chat, $"{username}, você adicionou o remédio {medicine} com quantidade {quantity} no horário {scheduledTime.TimeOfDay}");
             }
             else
             {
@@ -96,7 +120,9 @@ namespace Medicines.Services
 
             var match = Regex.Match(text, @"^/remove\s+(\w+)$");
 
-            var username = msg.From?.Username ?? "Usuário";
+            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            var username = user?.Username ?? "Usuário";
 
             if (match.Success)
             {
@@ -121,7 +147,9 @@ namespace Medicines.Services
 
             var match = Regex.Match(text, @"^/lookup\s+(\w+)$");
 
-            var username = msg.From?.Username ?? "Usuário";
+            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            var username = user?.Username ?? "Usuário";
 
             if (match.Success)
             {
@@ -147,7 +175,9 @@ namespace Medicines.Services
             if (msg is null)
                 return;
 
-            var username = msg.From?.Username ?? "Usuário";
+            var user = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            var username = user?.Username ?? "Usuário";
 
             var medicines = await _medicinesService.GetAllMedicinesAsync(msg.From!.Id);
 
@@ -159,7 +189,7 @@ namespace Medicines.Services
                 """
             ).ToList();
 
-            var result = string.Join("\n", details);
+            var result = string.Join("\n\n", details);
 
             await _bot.SendHtml(msg.Chat, 
             $"""
@@ -170,17 +200,20 @@ namespace Medicines.Services
 
         public async Task OnError(Exception exception, HandleErrorSource source)
         {
-            _logger.LogError(exception.Message, exception);
+            _logger.LogError(exception, exception.Message);
             await Task.CompletedTask;
         }
         public async Task OnMessage(Message msg, UpdateType type)
         {
-            if (msg.Text is null)
+            if (msg?.Text is null)
+            {
+                _logger.LogWarning("Received a message with no text.");
                 return;
-            
+            }
+
             string text = msg.Text.Trim();
             
-            if (text == "/start")
+            if (text.StartsWith("/start"))
             {
                 await StartAsync(msg, type);
             }

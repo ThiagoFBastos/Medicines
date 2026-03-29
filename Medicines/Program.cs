@@ -14,6 +14,7 @@ namespace Medicines
             builder.Services.ConvigureTelegramBotService();
             builder.Services.ConfigureRepositories();
             builder.Services.ConvigureMedicinesService();
+            builder.Services.ConfigureUserService();
             builder.Services.ConfigureSqlContext(builder.Configuration);
 
             var host = builder.Build();

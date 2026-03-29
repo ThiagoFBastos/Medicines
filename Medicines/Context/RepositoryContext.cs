@@ -12,6 +12,8 @@ namespace Medicines.Context
     {
         public DbSet<Medicine> Medicines { get; private set; }
 
+        public DbSet<User> Users { get; private set; }
+
         public RepositoryContext(DbContextOptions<RepositoryContext> options) : base(options)
         {
 
@@ -27,6 +29,15 @@ namespace Medicines.Context
                 med.Property(m => m.ScheduledTime).IsRequired();
                 med.HasIndex(m => new { m.Name })
                     .IsUnique();
+            });
+
+            modelBuilder.Entity<User>(u =>
+            {
+                u.HasKey(u => u.Id);
+                u.Property(u => u.Username).IsRequired();
+                u.Property(u => u.UserId).IsRequired();
+                u.HasIndex(u => new { u.UserId })
+                   .IsUnique();
             });
 
             base.OnModelCreating(modelBuilder);

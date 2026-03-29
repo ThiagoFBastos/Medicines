@@ -9,20 +9,16 @@ using System.Threading.Tasks;
 
 namespace Medicines.Models
 {
-    [Table("medicines")]
-    public class Medicine: IEntity
+    [Table("users")]
+    public class User: IEntity
     {
         [Key]
         public Guid Id { get; set; }
 
-        public required string Name { get; set; }
-
-        public int PillsQuantity { get; set; } = 0;
-
         public required long UserId { get; set; }
 
-        public required DateTimeOffset ScheduledTime { get; set; }
+        public required string Username { get; set; }
 
-        public DateTimeOffset RegisteredDate { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset registeredDate { get; set; } = DateTimeOffset.UtcNow;
     }
 }
