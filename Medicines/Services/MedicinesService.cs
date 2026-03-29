@@ -24,8 +24,6 @@ namespace Medicines.Services
 
         public async Task<Result<bool, string>> AddMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId)
         {
-            name = name.ToLower();
-
             try
             {
                 var result = await GetMedicineByNameAsync(name, userId);
@@ -37,6 +35,11 @@ namespace Medicines.Services
                 }
 
                 var medicine = new Medicine { Name = name, PillsQuantity = pillsQuantity, UserId = userId, ScheduledTime = scheduledTime };
+
+                if(!medicine.IsValid())
+                {
+                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                }
 
                 _repositoryManager.MedicineRepository.AddMedicine(medicine);
                 await _repositoryManager.SaveAsync();
@@ -67,6 +70,12 @@ namespace Medicines.Services
                 }
 
                 medicine.PillsQuantity += pillsQuantity;
+
+                if(!medicine.IsValid())
+                {
+                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                }
+
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
@@ -146,6 +155,11 @@ namespace Medicines.Services
                     var tz = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
+
+                    if (!medicine.IsValid())
+                    {
+                        return Result<Medicine?, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                    }
                 }
 
                 return Result<Medicine?, string>.Success(medicine);
@@ -168,6 +182,11 @@ namespace Medicines.Services
                     var tz = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
+
+                    if (!medicine.IsValid())
+                    {
+                        return Result<Medicine?, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                    }
                 }
                 else
                 {
@@ -198,6 +217,11 @@ namespace Medicines.Services
                 medicine.PillsQuantity = pillsQuantity;
                 medicine.ScheduledTime = scheduledTime;
 
+                if (!medicine.IsValid())
+                {
+                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                }
+
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
@@ -225,6 +249,11 @@ namespace Medicines.Services
                 }
 
                 medicine.ScheduledTime = scheduledTime;
+
+                if (!medicine.IsValid())
+                {
+                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                }
 
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();

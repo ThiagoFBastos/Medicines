@@ -38,6 +38,14 @@ namespace Medicines.Services
                     Username = username
                 };
 
+                if (!user.IsValid())
+                {
+                    return Result<bool, string>.Failure($"""
+                        Os dados do usuário estão inválidos.\n
+                        Verifique se o username só contém caracteres alfanuméricos, ponto ou underscore, além disso possui entre 1 e 50 caracteres!
+                    """);
+                }
+
                 _repositoryManager.UserRepository.AddUser(user);
                 await _repositoryManager.SaveAsync();
 
@@ -122,6 +130,14 @@ namespace Medicines.Services
                 }
 
                 user.Username = username;
+
+                if (!user.IsValid())
+                {
+                    return Result<bool, string>.Failure($"""
+                        Os dados do usuário estão inválidos.\n
+                        Verifique se o username só contém caracteres alfanuméricos, ponto ou underscore, além disso possui entre 1 e 50 caracteres!
+                    """);
+                }
 
                 _repositoryManager.UserRepository.UpdateUser(user);
                 await _repositoryManager.SaveAsync();

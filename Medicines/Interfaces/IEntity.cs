@@ -11,5 +11,7 @@ namespace Medicines.Interfaces
     {
         [Key]
         public Guid Id { get; set; }
+
+        bool IsValid();
     }
 }
