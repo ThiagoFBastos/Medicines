@@ -56,7 +56,6 @@ Use the `.env-example` as reference to create your configuration file `.env` wit
 How to start your project
 
 ```bash
-cd Medicines
 docker compose up --build
 ```
 
