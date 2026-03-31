@@ -129,7 +129,7 @@ namespace Medicines.Services
                 {
                     Id = med.Id,
                     Name = med.Name,
-                    PillsQuantity = med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays,
+                    PillsQuantity = Math.Max(0, med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays),
                     ScheduledTime = TimeZoneInfo.ConvertTime(med.ScheduledTime, tz),
                     UserId = med.UserId,
                     RegisteredDate = TimeZoneInfo.ConvertTime(med.RegisteredDate, tz)
@@ -178,13 +178,10 @@ namespace Medicines.Services
                 if (medicine is not null)
                 {
                     var tz = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+                    medicine.PillsQuantity -= (int)(DateTimeOffset.UtcNow - medicine.RegisteredDate).TotalDays;
+                    medicine.PillsQuantity = Math.Max(0, medicine.PillsQuantity);
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
-
-                    if (!medicine.IsValid())
-                    {
-                        return Result<Medicine?, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
-                    }
                 }
                 else
                 {
@@ -281,7 +278,7 @@ namespace Medicines.Services
                         {
                             Id = med.Id,
                             Name = med.Name,
-                            PillsQuantity = med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays,
+                            PillsQuantity = Math.Max(0, med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays),
                             ScheduledTime = TimeZoneInfo.ConvertTime(med.ScheduledTime, tz),
                             UserId = med.UserId,
                             RegisteredDate = TimeZoneInfo.ConvertTime(med.RegisteredDate, tz)
@@ -312,7 +309,7 @@ namespace Medicines.Services
                        {
                            Id = med.Id,
                            Name = med.Name,
-                           PillsQuantity = med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays,
+                           PillsQuantity = Math.Max(0, med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays),
                            ScheduledTime = TimeZoneInfo.ConvertTime(med.ScheduledTime, tz),
                            UserId = med.UserId,
                            RegisteredDate = TimeZoneInfo.ConvertTime(med.RegisteredDate, tz)
