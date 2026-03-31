@@ -59,9 +59,7 @@ namespace Medicines.Services
         {
             try
             {
-                var result = await GetMedicineByNameAsync(name, userId);
-
-                var medicine = result.Value;
+                var medicine = await _repositoryManager.MedicineRepository.GetMedicineByNameAsync(name, userId);
 
                 if (medicine is null)
                 {

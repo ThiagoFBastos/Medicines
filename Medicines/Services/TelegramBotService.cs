@@ -36,7 +36,7 @@ namespace Medicines.Services
             _userService = userService;
         }
 
-        public async Task Help(Chat chat)
+        private async Task Help(Chat chat)
         {
             await _bot.SendHtml(chat, """
             Os seguintes comandos estão disponíveis:
@@ -46,11 +46,12 @@ namespace Medicines.Services
             • <b>/remove [remédio]</b> - Remove um remédio da lista.
             • <b>/lookup [remédio]</b> - Procura por um remédio específico.
             • <b>/list</b> - Exibe a lista de remédios.
+            • <b>/pills [remédio] [quantidade]</b> - Adiciona uma quantidade de comprimidos a um remédio existente.
             • <b>/help</b> - Exibe esta mensagem de ajuda.
             """);
         }
 
-        public async Task StartAsync(Message msg, UpdateType type)
+        private async Task StartAsync(Message msg, UpdateType type)
         {
             if (msg is null)
                 return;
@@ -90,7 +91,7 @@ namespace Medicines.Services
             }
         }
 
-        public async Task AddAsync(Message msg, UpdateType type)
+        private async Task AddAsync(Message msg, UpdateType type)
         {
             if (msg is null)
                 return;
@@ -136,7 +137,7 @@ namespace Medicines.Services
             }
         }
 
-        public async Task RemoveAsync(Message msg, UpdateType type)
+        private async Task RemoveAsync(Message msg, UpdateType type)
         {
             if (msg is null)
                 return;
@@ -178,7 +179,7 @@ namespace Medicines.Services
             }
         }
 
-        public async Task LookupAsync(Message msg, UpdateType type)
+        private async Task LookupAsync(Message msg, UpdateType type)
         {
             if (msg is null)
                 return;
@@ -227,7 +228,7 @@ namespace Medicines.Services
             }
         }
 
-        public async Task ListAsync(Message msg, UpdateType type)
+        private async Task ListAsync(Message msg, UpdateType type)
         {
             if (msg is null)
                 return;
@@ -272,6 +273,49 @@ namespace Medicines.Services
             }
         }
 
+        private async Task Pills(Message msg, UpdateType update)
+        {
+            if (msg is null)
+                return;
+
+            var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            if (!result.IsSuccess)
+            {
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                return;
+            }
+
+            var user = result.Value;
+
+            var username = user?.Username ?? "Usuário";
+
+            var text = msg.Text!.Trim();
+
+            var match = Regex.Match(text, @"^/pills\s+(\w+)\s+(\d+)$");
+
+            if (match.Success)
+            {
+                string medicine = match.Groups[1].Value;
+                int pills = int.Parse(match.Groups[2].Value);
+
+                var addPillsResult = await _medicinesService.AddMedicinePillsAsync(medicine, pills, msg.From!.Id);
+
+                if (addPillsResult.IsSuccess)
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, {pills} comprimidos do remédio {medicine} foram adicionados");
+                }
+                else
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, {addPillsResult.Error}");
+                }
+            }
+            else
+            {
+                await Help(msg.Chat);
+            }
+        }
+
         public async Task OnError(Exception exception, HandleErrorSource source)
         {
             _logger.LogError(exception, exception.Message);
@@ -306,6 +350,10 @@ namespace Medicines.Services
             else if (text.StartsWith("/list"))
             {
                 await ListAsync(msg, type);
+            }
+            else if(text.StartsWith("/pills"))
+            {
+                await Pills(msg, type);
             }
             else if(text.StartsWith("/help"))
             {
