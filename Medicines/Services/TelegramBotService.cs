@@ -273,7 +273,7 @@ namespace Medicines.Services
             }
         }
 
-        private async Task Pills(Message msg, UpdateType update)
+        private async Task PillsAsync(Message msg, UpdateType update)
         {
             if (msg is null)
                 return;
@@ -329,39 +329,46 @@ namespace Medicines.Services
                 return;
             }
 
-            string text = msg.Text.Trim();
-            
-            if (text.StartsWith("/start"))
+            try
             {
-                await StartAsync(msg, type);
+                string text = msg.Text.Trim();
+
+                if (text.StartsWith("/start"))
+                {
+                    await StartAsync(msg, type);
+                }
+                else if (text.StartsWith("/add"))
+                {
+                    await AddAsync(msg, type);
+                }
+                else if (text.StartsWith("/remove"))
+                {
+                    await RemoveAsync(msg, type);
+                }
+                else if (text.StartsWith("/lookup"))
+                {
+                    await LookupAsync(msg, type);
+                }
+                else if (text.StartsWith("/list"))
+                {
+                    await ListAsync(msg, type);
+                }
+                else if (text.StartsWith("/pills"))
+                {
+                    await PillsAsync(msg, type);
+                }
+                else if (text.StartsWith("/help"))
+                {
+                    await Help(msg.Chat);
+                }
+                else
+                {
+                    await Help(msg.Chat);
+                }
             }
-            else if (text.StartsWith("/add"))
+            catch (Exception exception)
             {
-                await AddAsync(msg, type);
-            }
-            else if (text.StartsWith("/remove"))
-            {
-                await RemoveAsync(msg, type);
-            }
-            else if (text.StartsWith("/lookup"))
-            {
-               await LookupAsync(msg, type);
-            }
-            else if (text.StartsWith("/list"))
-            {
-                await ListAsync(msg, type);
-            }
-            else if(text.StartsWith("/pills"))
-            {
-                await Pills(msg, type);
-            }
-            else if(text.StartsWith("/help"))
-            {
-                await Help(msg.Chat);
-            }
-            else
-            {
-                await Help(msg.Chat);
+                _logger.LogError(exception, $"An error occurred while processing the message: {exception.Message}");
             }
         }
 
