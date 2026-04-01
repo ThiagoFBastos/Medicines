@@ -29,7 +29,7 @@
 - <b>/remove [remédio]</b> - Remove um remédio da lista. <br>
 - <b>/lookup [remédio]</b> - Procura por um remédio específico. <br>
 - <b>/list</b> - Exibe a lista de remédios. <br>
-- <b>/pills [remédio] [quantidade]</b> - Adiciona uma quantidade de comprimidos a um remédio existente.
+- <b>/pills [remédio] [quantidade]</b> - Adiciona uma quantidade de comprimidos a um remédio existente. <br>
 - <b>/help</b> - Exibe esta mensagem de ajuda. <br>
 <br>
 Obs: the bot talks with the user in portuguese
