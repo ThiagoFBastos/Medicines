@@ -79,7 +79,9 @@ namespace Medicines.Services
                     if (resultUser.IsSuccess)
                     {
                         var user = resultUser.Value;
-                        await _bot.SendMessage(msg.Chat, $"{user!.Username}, {result.Error}!");
+                        var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                        await _bot.SendMessage(msg.Chat, $"{user!.Username}, {errorDetails}!");
                     }
                     else
                     {
@@ -106,7 +108,9 @@ namespace Medicines.Services
 
             if (!result.IsSuccess)
             {
-                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                 return;
             }
 
@@ -152,7 +156,9 @@ namespace Medicines.Services
 
             if (!result.IsSuccess)
             {
-                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                 return;
             }
 
@@ -194,7 +200,9 @@ namespace Medicines.Services
 
             if (!result.IsSuccess)
             {
-                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                 return;
             }
 
@@ -239,7 +247,9 @@ namespace Medicines.Services
 
             if (!result.IsSuccess)
             {
-                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                 return;
             }
 
@@ -284,7 +294,9 @@ namespace Medicines.Services
 
             if (!result.IsSuccess)
             {
-                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                 return;
             }
 
@@ -327,7 +339,9 @@ namespace Medicines.Services
 
             if (!result.IsSuccess)
             {
-                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                 return;
             }
 
@@ -372,7 +386,9 @@ namespace Medicines.Services
 
             if (!result.IsSuccess)
             {
-                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                 return;
             }
 
