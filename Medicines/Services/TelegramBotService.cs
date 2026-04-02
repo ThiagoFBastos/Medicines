@@ -47,6 +47,7 @@ namespace Medicines.Services
             • <b>/lookup [remédio]</b> - Procura por um remédio específico.
             • <b>/list</b> - Exibe a lista de remédios.
             • <b>/pills [remédio] [quantidade]</b> - Adiciona uma quantidade de comprimidos a um remédio existente.
+            • <b>/schedule [remédio] [horário]</b> - Atualiza o horário de um remédio existente.
             • <b>/help</b> - Exibe esta mensagem de ajuda.
             """);
         }
@@ -316,6 +317,51 @@ namespace Medicines.Services
             }
         }
 
+        public async Task ScheduleAsync(Message msg, UpdateType update)
+        {
+            if (msg is null)
+                return;
+
+            var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            if (!result.IsSuccess)
+            {
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                return;
+            }
+
+            var user = result.Value;
+
+            var username = user?.Username ?? "Usuário";
+
+            var text = msg.Text!.Trim();
+
+            var match = Regex.Match(text, @"^/schedule\s+(\w+)\s+(\d{2}):(\d{2})$");
+
+            if (match.Success)
+            {
+                string medicine = match.Groups[1].Value;
+                int hour = int.Parse(match.Groups[2].Value);
+                int minutes = int.Parse(match.Groups[3].Value);
+                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hour, minutes, 0);
+
+                var updateScheduleResult = await _medicinesService.UpdateMedicineScheduledTime(medicine, scheduledTime.ToLocalTime(), msg.From!.Id);
+
+                if (updateScheduleResult.IsSuccess)
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, o horário do remédio {medicine} foi atualizado para {scheduledTime:HH:mm}");
+                }
+                else
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, {updateScheduleResult.Error}");
+                }
+            }
+            else
+            {
+                await Help(msg.Chat);
+            }
+        }
+
         public async Task OnError(Exception exception, HandleErrorSource source)
         {
             _logger.LogError(exception, exception.Message);
@@ -356,6 +402,10 @@ namespace Medicines.Services
                 else if (text.StartsWith("/pills"))
                 {
                     await PillsAsync(msg, type);
+                }
+                else if(text.StartsWith("/schedule"))
+                {
+                    await ScheduleAsync(msg, type);
                 }
                 else if (text.StartsWith("/help"))
                 {

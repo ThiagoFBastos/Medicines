@@ -30,6 +30,7 @@
 - <b>/lookup [remédio]</b> - Procura por um remédio específico. <br>
 - <b>/list</b> - Exibe a lista de remédios. <br>
 - <b>/pills [remédio] [quantidade]</b> - Adiciona uma quantidade de comprimidos a um remédio existente. <br>
+- <b>/schedule [remédio] [horário]</b> - Atualiza o horário de um remédio existente. <br>
 - <b>/help</b> - Exibe esta mensagem de ajuda. <br>
 <br>
 Obs: the bot talks with the user in portuguese
@@ -61,8 +62,6 @@ docker compose up --build
 ```
 
 <h2 id="contribute">📫 Contribute</h2>
-
-Here you will explain how other developers can contribute to your project. For example, explaining how can create their branches, which patterns to follow and how to open an pull request
 
 1. `git clone https://github.com/ThiagoFBastos/Medicines.git`
 2. `git checkout -b feature/NAME`

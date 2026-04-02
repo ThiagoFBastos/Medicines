@@ -44,7 +44,7 @@ namespace Medicines.Services
                 _repositoryManager.MedicineRepository.AddMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O remédio {name} do usuário {userId} foi cadastrado com {pillsQuantity} comprimidos e horário {scheduledTime}");
+                _logger.LogInformation($"O remédio {name} do usuário {userId} foi cadastrado com {pillsQuantity} comprimidos e horário {scheduledTime:HH:mm}");
 
                 return Result<bool, string>.Success(true);
             }
@@ -220,7 +220,7 @@ namespace Medicines.Services
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O remédio {name} do usuário {userId} foi atualizado para {pillsQuantity} comprimidos e horário {scheduledTime}");
+                _logger.LogInformation($"O remédio {name} do usuário {userId} foi atualizado para {pillsQuantity} comprimidos e horário {scheduledTime:HH:mm}");
 
                 return Result<bool, string>.Success(true);
             }
@@ -253,7 +253,7 @@ namespace Medicines.Services
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O horário do remédio {name} do usuário {userId} foi atualizado para {scheduledTime}");
+                _logger.LogInformation($"O horário do remédio {name} do usuário {userId} foi atualizado para {scheduledTime:HH:mm}");
 
                 return Result<bool, string>.Success(true);
             }
