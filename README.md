@@ -31,6 +31,7 @@
 - <b>/list</b> - Exibe a lista de remédios. <br>
 - <b>/pills [remédio] [quantidade]</b> - Adiciona uma quantidade de comprimidos a um remédio existente. <br>
 - <b>/schedule [remédio] [horário]</b> - Atualiza o horário de um remédio existente. <br>
+- <b>/update [remédio] [quantidade] [horário]</b> - Atualiza a quantidade e o horário de um remédio existente. <br>
 - <b>/help</b> - Exibe esta mensagem de ajuda. <br>
 <br>
 Obs: the bot talks with the user in portuguese

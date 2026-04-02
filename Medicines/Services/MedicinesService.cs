@@ -209,7 +209,7 @@ namespace Medicines.Services
                     return Result<bool, string>.Failure($"O remédio {name} não foi encontrado");
                 }
 
-                medicine.PillsQuantity = pillsQuantity;
+                medicine.PillsQuantity = pillsQuantity + (int)(DateTimeOffset.UtcNow - medicine.RegisteredDate).TotalDays;
                 medicine.ScheduledTime = scheduledTime;
 
                 if (!medicine.IsValid())

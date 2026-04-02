@@ -48,6 +48,7 @@ namespace Medicines.Services
             • <b>/list</b> - Exibe a lista de remédios.
             • <b>/pills [remédio] [quantidade]</b> - Adiciona uma quantidade de comprimidos a um remédio existente.
             • <b>/schedule [remédio] [horário]</b> - Atualiza o horário de um remédio existente.
+            • <b>/update [remédio] [quantidade] [horário]</b> - Atualiza a quantidade e o horário de um remédio existente.
             • <b>/help</b> - Exibe esta mensagem de ajuda.
             """);
         }
@@ -362,11 +363,59 @@ namespace Medicines.Services
             }
         }
 
+        public async Task UpdateAsync(Message msg, UpdateType update)
+        {
+            if (msg is null)
+                return;
+
+            var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+            if (!result.IsSuccess)
+            {
+                await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {result.Error}");
+                return;
+            }
+
+            var user = result.Value;
+
+            var username = user?.Username ?? "Usuário";
+
+            var text = msg.Text!.Trim();
+
+            var match = Regex.Match(text, @"^/update\s+(\w+)\s+(\d+)\s+(\d{2}):(\d{2})$");
+
+            if (match.Success)
+            {
+                string medicine = match.Groups[1].Value;
+                int pillsQuantity = int.Parse(match.Groups[2].Value);
+                int hours = int.Parse(match.Groups[3].Value);
+                int minutes = int.Parse(match.Groups[4].Value);
+
+                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
+
+                var updateResult = await _medicinesService.UpdateMedicineAsync(medicine, pillsQuantity, scheduledTime.ToLocalTime(), msg.From!.Id);
+
+                if (updateResult.IsSuccess)
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, o remédio {medicine} foi atualizado com quantidade {pillsQuantity} e horário {scheduledTime:HH:mm}");
+                }
+                else
+                {
+                    await _bot.SendMessage(msg.Chat, $"{username}, {updateResult.Error}");
+                }
+            }
+            else
+            {
+                await Help(msg.Chat);
+            }
+        }
+
         public async Task OnError(Exception exception, HandleErrorSource source)
         {
             _logger.LogError(exception, exception.Message);
             await Task.CompletedTask;
         }
+
         public async Task OnMessage(Message msg, UpdateType type)
         {
             if (msg?.Text is null)
@@ -406,6 +455,10 @@ namespace Medicines.Services
                 else if(text.StartsWith("/schedule"))
                 {
                     await ScheduleAsync(msg, type);
+                }
+                else if(text.StartsWith("/update"))
+                {
+                    await UpdateAsync(msg, type);
                 }
                 else if (text.StartsWith("/help"))
                 {
