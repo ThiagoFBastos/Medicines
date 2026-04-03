@@ -179,10 +179,6 @@ namespace Medicines.Services
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
                 }
-                else
-                {
-                    return Result<Medicine?, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
-                }
 
                 return Result<Medicine?, EMedicinesStatusCode>.Success(medicine);
             }
