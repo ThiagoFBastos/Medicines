@@ -85,7 +85,8 @@ namespace Medicines.Services
                     }
                     else
                     {
-                        await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {resultUser.Error}");
+                        var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+                        await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
                     }
                 }
             }
@@ -134,7 +135,8 @@ namespace Medicines.Services
                 }
                 else
                 {
-                    await _bot.SendMessage(msg.Chat, $"{username}, {addResult.Error}");
+                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(addResult.Error, medicine);
+                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
                 }
             }
             else
@@ -178,7 +180,8 @@ namespace Medicines.Services
                 }
                 else
                 {
-                    await _bot.SendMessage(msg.Chat, $"{username}, {deleteResult.Error}");
+                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(deleteResult.Error, medicine);
+                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
                 }
             }
             else
@@ -229,7 +232,8 @@ namespace Medicines.Services
                 }
                 else
                 {
-                    await _bot.SendMessage(msg.Chat, $"{username}, {getResult.Error}");
+                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(getResult.Error, medicine);
+                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
                 }
             }
             else
@@ -281,7 +285,8 @@ namespace Medicines.Services
             }
             else
             {
-                await _bot.SendMessage(msg.Chat, $"{username}, {getResult.Error}");
+                var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(getResult.Error, null);
+                await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
             }
         }
 
@@ -321,7 +326,8 @@ namespace Medicines.Services
                 }
                 else
                 {
-                    await _bot.SendMessage(msg.Chat, $"{username}, {addPillsResult.Error}");
+                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(addPillsResult.Error, medicine);
+                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
                 }
             }
             else
@@ -368,7 +374,8 @@ namespace Medicines.Services
                 }
                 else
                 {
-                    await _bot.SendMessage(msg.Chat, $"{username}, {updateScheduleResult.Error}");
+                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(updateScheduleResult.Error, medicine);
+                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
                 }
             }
             else
@@ -417,7 +424,8 @@ namespace Medicines.Services
                 }
                 else
                 {
-                    await _bot.SendMessage(msg.Chat, $"{username}, {updateResult.Error}");
+                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(updateResult.Error, medicine);
+                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
                 }
             }
             else

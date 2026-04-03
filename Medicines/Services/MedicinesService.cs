@@ -1,4 +1,5 @@
-﻿using Medicines.Interfaces;
+﻿using Medicines.Enums;
+using Medicines.Interfaces;
 using Medicines.Models;
 using Medicines.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ namespace Medicines.Services
             _logger = logger;
         }
 
-        public async Task<Result<bool, string>> AddMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId)
+        public async Task<Result<bool, EMedicinesStatusCode>> AddMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId)
         {
             try
             {
@@ -30,15 +31,15 @@ namespace Medicines.Services
 
                 if (result.Value is not null)
                 {
-                    _logger.LogInformation($"The medicine {name} of user {userId} already been registered");
-                    return Result<bool, string>.Failure($"O remédio {name} já está cadastrado");
+                    _logger.LogInformation($"The medicine {name} of user {userId} already exists");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_ALREADY_EXISTS);
                 }
 
                 var medicine = new Medicine { Name = name, PillsQuantity = pillsQuantity, UserId = userId, ScheduledTime = scheduledTime };
 
                 if(!medicine.IsValid())
                 {
-                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 
                 _repositoryManager.MedicineRepository.AddMedicine(medicine);
@@ -46,16 +47,16 @@ namespace Medicines.Services
 
                 _logger.LogInformation($"O remédio {name} do usuário {userId} foi cadastrado com {pillsQuantity} comprimidos e horário {scheduledTime:HH:mm}");
 
-                return Result<bool, string>.Success(true);
+                return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while adding the medicine {name} of user {userId}");
-                return Result<bool, string>.Failure($"Ocorreu um erro ao cadastrar o remédio {name}");
+                return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_ADD_ERROR);
             }
         }
 
-        public async Task<Result<bool, string>> AddMedicinePillsAsync(string name, int pillsQuantity, long userId)
+        public async Task<Result<bool, EMedicinesStatusCode>> AddMedicinePillsAsync(string name, int pillsQuantity, long userId)
         {
             try
             {
@@ -63,15 +64,15 @@ namespace Medicines.Services
 
                 if (medicine is null)
                 {
-                    _logger.LogInformation($"The number of pills of the medicine {name} of user {userId} wasn't updated");
-                    return Result<bool, string>.Failure($"O número de comprimido do remédio {name} não foi atualizado");
+                    
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
                 medicine.PillsQuantity += pillsQuantity;
 
                 if(!medicine.IsValid())
                 {
-                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
@@ -79,16 +80,16 @@ namespace Medicines.Services
 
                 _logger.LogInformation($"O número de comprimidos do remédio {name} do usuário {userId} foi atualizado para {medicine.PillsQuantity}");
 
-                return Result<bool, string>.Success(true);
+                return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while updating the number of pills of the medicine {name} of user {userId}");
-                return Result<bool, string>.Failure($"Ocorreu um erro ao atualizar o número de comprimidos do remédio {name}");
+                return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR);
             }
         }
 
-        public async Task<Result<bool, string>> DeleteMedicineAsync(string name, long userId)
+        public async Task<Result<bool, EMedicinesStatusCode>> DeleteMedicineAsync(string name, long userId)
         {
             try
             {
@@ -97,7 +98,7 @@ namespace Medicines.Services
                 if (medicine is null)
                 {
                     _logger.LogInformation($"The medicine {name} of user {userId} wasn't found");
-                    return Result<bool, string>.Failure($"O remédio {name} não foi encontrado");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
                 _repositoryManager.MedicineRepository.DeleteMedicine(medicine);
@@ -105,16 +106,16 @@ namespace Medicines.Services
 
                 _logger.LogInformation($"O remédio {name} do usuário {userId} foi excluído");
 
-                return Result<bool, string>.Success(true);
+                return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while deleting the medicine {name} of user {userId}");
-                return Result<bool, string>.Failure($"Ocorreu um erro ao excluir o remédio {name}");
+                return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DELETE_ERROR);
             }
         }
 
-        public async Task<Result<IEnumerable<Medicine>, string>> GetAllMedicinesAsync(long userId)
+        public async Task<Result<IEnumerable<Medicine>, EMedicinesStatusCode>> GetAllMedicinesAsync(long userId)
         {
             try
             {
@@ -125,7 +126,7 @@ namespace Medicines.Services
                 var medicines = await _repositoryManager.MedicineRepository
                         .GetAllMedicinesAsync(userId);
 
-                return Result<IEnumerable<Medicine>, string>.Success(medicines.Select(med => new Medicine
+                return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Success(medicines.Select(med => new Medicine
                 {
                     Id = med.Id,
                     Name = med.Name,
@@ -138,11 +139,11 @@ namespace Medicines.Services
             catch(Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while retrieving the medicines of user {userId}");
-                return Result<IEnumerable<Medicine>, string>.Failure($"Ocorreu um erro ao recuperar os remédios");
+                return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_LIST_ERROR);
             }
         }
 
-        public async Task<Result<Medicine?, string>> GetMedicineByIdAsync(Guid id)
+        public async Task<Result<Medicine?, EMedicinesStatusCode>> GetMedicineByIdAsync(Guid id)
         {
             try
             {
@@ -153,23 +154,18 @@ namespace Medicines.Services
                     var tz = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
-
-                    if (!medicine.IsValid())
-                    {
-                        return Result<Medicine?, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
-                    }
                 }
 
-                return Result<Medicine?, string>.Success(medicine);
+                return Result<Medicine?, EMedicinesStatusCode>.Success(medicine);
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while retrieving the medicine with id {id}");
-                return Result<Medicine?, string>.Failure($"Ocorreu um erro ao recuperar o remédio");
+                return Result<Medicine?, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_GET_ERROR);
             }
         }
 
-        public async Task<Result<Medicine?, string>> GetMedicineByNameAsync(string name, long userId)
+        public async Task<Result<Medicine?, EMedicinesStatusCode>> GetMedicineByNameAsync(string name, long userId)
         {
             try
             {
@@ -185,19 +181,19 @@ namespace Medicines.Services
                 }
                 else
                 {
-                    return Result<Medicine?, string>.Failure($"O remédio {name} não foi encontrado");
+                    return Result<Medicine?, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
-                return Result<Medicine?, string>.Success(medicine);
+                return Result<Medicine?, EMedicinesStatusCode>.Success(medicine);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while retrieving the medicine {name} of user {userId}");
-                return Result<Medicine?, string>.Failure($"Ocorreu um erro ao recuperar o remédio {name}");
+                return Result<Medicine?, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_GET_ERROR);
             }
         }
 
-        public async Task<Result<bool, string>> UpdateMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId)
+        public async Task<Result<bool, EMedicinesStatusCode>> UpdateMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId)
         {
             try
             {
@@ -206,7 +202,7 @@ namespace Medicines.Services
                 if (medicine is null)
                 {
                     _logger.LogInformation($"The medicine {name} of user {userId} wasn't found");
-                    return Result<bool, string>.Failure($"O remédio {name} não foi encontrado");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
                 medicine.PillsQuantity = pillsQuantity + (int)(DateTimeOffset.UtcNow - medicine.RegisteredDate).TotalDays;
@@ -214,7 +210,7 @@ namespace Medicines.Services
 
                 if (!medicine.IsValid())
                 {
-                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
@@ -222,16 +218,16 @@ namespace Medicines.Services
 
                 _logger.LogInformation($"O remédio {name} do usuário {userId} foi atualizado para {pillsQuantity} comprimidos e horário {scheduledTime:HH:mm}");
 
-                return Result<bool, string>.Success(true);
+                return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while updating the medicine {name} of user {userId}");
-                return Result<bool, string>.Failure($"Ocorreu um erro ao atualizar o remédio {name}");
+                return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR);
             }
         }
 
-        public async Task<Result<bool, string>> UpdateMedicineScheduledTime(string name, DateTimeOffset scheduledTime, long userId)
+        public async Task<Result<bool, EMedicinesStatusCode>> UpdateMedicineScheduledTime(string name, DateTimeOffset scheduledTime, long userId)
         {
             try
             {
@@ -240,14 +236,14 @@ namespace Medicines.Services
                 if (medicine is null)
                 {
                     _logger.LogInformation($"The medicine {name} of user {userId} wasn't found");
-                    return Result<bool, string>.Failure($"O remédio {name} não foi encontrado");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
                 medicine.ScheduledTime = scheduledTime;
 
                 if (!medicine.IsValid())
                 {
-                    return Result<bool, string>.Failure("O remédio é inválido. Verifique se o nome contém apenas letras e espaços, e se a quantidade de comprimidos é um número inteiro não negativo.");
+                    return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
@@ -255,16 +251,16 @@ namespace Medicines.Services
 
                 _logger.LogInformation($"O horário do remédio {name} do usuário {userId} foi atualizado para {scheduledTime:HH:mm}");
 
-                return Result<bool, string>.Success(true);
+                return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while updating the scheduled time of the medicine {name} of user {userId}");
-                return Result<bool, string>.Failure($"Ocorreu um erro ao atualizar o horário do remédio {name}");
+                return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR);
             }
         }
 
-        public async Task<Result<IEnumerable<Medicine>, string>> GetMedicinesWithFewPills(long userId)
+        public async Task<Result<IEnumerable<Medicine>, EMedicinesStatusCode>> GetMedicinesWithFewPills(long userId)
         {
             try
             {
@@ -272,8 +268,10 @@ namespace Medicines.Services
 
                 var now = DateTimeOffset.UtcNow;
 
-                return Result<IEnumerable<Medicine>, string>.Success(await _repositoryManager.MedicineRepository
-                        .FindByCondition(med => med.UserId == userId && med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays <= 20)
+                return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Success(await _repositoryManager.MedicineRepository
+                        .FindByCondition(med => med.UserId == userId 
+                        && med.PillsQuantity - (int)(now - med.RegisteredDate).TotalDays <= 20
+                        && ((int)now.TimeOfDay.TotalHours) % 6 == 0)
                         .Select(med => new Medicine
                         {
                             Id = med.Id,
@@ -289,11 +287,11 @@ namespace Medicines.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while retrieving the medicines with few pills of user {userId}");
-                return Result<IEnumerable<Medicine>, string>.Failure($"Ocorreu um erro ao recuperar os remédios com poucos comprimidos");
+                return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_LIST_ERROR);
             }
         }
 
-        public async Task<Result<IEnumerable<Medicine>, string>> GetMedicinesToTakeTodayAsync(long userId)
+        public async Task<Result<IEnumerable<Medicine>, EMedicinesStatusCode>> GetMedicinesToTakeTodayAsync(long userId)
         {
             try
             {
@@ -301,7 +299,7 @@ namespace Medicines.Services
 
                 var now = DateTimeOffset.UtcNow;
 
-                return Result<IEnumerable<Medicine>, string>.Success(await _repositoryManager.MedicineRepository
+                return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Success(await _repositoryManager.MedicineRepository
                        .FindByCondition(med => med.UserId == userId && med.ScheduledTime.TimeOfDay >= now.TimeOfDay
                        && (med.ScheduledTime.TimeOfDay - now.TimeOfDay).TotalHours <= 2
                        && (med.ScheduledTime.TimeOfDay - now.TimeOfDay).TotalMinutes % 30 == 0)
@@ -320,7 +318,7 @@ namespace Medicines.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while retrieving the medicines to take today of user {userId}");
-                return Result<IEnumerable<Medicine>, string>.Failure($"Ocorreu um erro ao recuperar os remédios para tomar hoje");
+                return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_LIST_ERROR);
             }
         }
     }

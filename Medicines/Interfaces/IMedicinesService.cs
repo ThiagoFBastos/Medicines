@@ -1,4 +1,5 @@
-﻿using Medicines.Models;
+﻿using Medicines.Enums;
+using Medicines.Models;
 using Medicines.Utils;
 using System;
 using System.Collections.Generic;
@@ -10,15 +11,15 @@ namespace Medicines.Interfaces
 {
     public interface IMedicinesService
     {
-        Task<Result<IEnumerable<Medicine>, string>> GetAllMedicinesAsync(long userId);
-        Task<Result<Medicine?, string>> GetMedicineByIdAsync(Guid id);
-        Task<Result<Medicine?, string>> GetMedicineByNameAsync(string name, long userId);
-        Task<Result<bool, string>> AddMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId);
-        Task<Result<bool, string>> UpdateMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId);
-        Task<Result<bool, string>> AddMedicinePillsAsync(string name, int pillsQuantity, long userId);
-        Task<Result<bool, string>> UpdateMedicineScheduledTime(string name, DateTimeOffset scheduledTime, long userId);
-        Task<Result<bool, string>> DeleteMedicineAsync(string name, long userId);
-        Task<Result<IEnumerable<Medicine>, string>> GetMedicinesWithFewPills(long userId);
-        Task<Result<IEnumerable<Medicine>, string>> GetMedicinesToTakeTodayAsync(long userId);
+        Task<Result<IEnumerable<Medicine>, EMedicinesStatusCode>> GetAllMedicinesAsync(long userId);
+        Task<Result<Medicine?, EMedicinesStatusCode>> GetMedicineByIdAsync(Guid id);
+        Task<Result<Medicine?, EMedicinesStatusCode>> GetMedicineByNameAsync(string name, long userId);
+        Task<Result<bool, EMedicinesStatusCode>> AddMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId);
+        Task<Result<bool, EMedicinesStatusCode>> UpdateMedicineAsync(string name, int pillsQuantity, DateTimeOffset scheduledTime, long userId);
+        Task<Result<bool, EMedicinesStatusCode>> AddMedicinePillsAsync(string name, int pillsQuantity, long userId);
+        Task<Result<bool, EMedicinesStatusCode>> UpdateMedicineScheduledTime(string name, DateTimeOffset scheduledTime, long userId);
+        Task<Result<bool, EMedicinesStatusCode>> DeleteMedicineAsync(string name, long userId);
+        Task<Result<IEnumerable<Medicine>, EMedicinesStatusCode>> GetMedicinesWithFewPills(long userId);
+        Task<Result<IEnumerable<Medicine>, EMedicinesStatusCode>> GetMedicinesToTakeTodayAsync(long userId);
     }
 }

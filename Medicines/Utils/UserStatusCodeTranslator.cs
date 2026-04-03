@@ -22,7 +22,7 @@ namespace Medicines.Utils
                 EUserStatusCode.USER_GET_ERROR => "Ocorreu um erro ao obter o usuário",
                 EUserStatusCode.USER_LIST_ERROR => "Ocorreu um erro ao listar os usuários",
                 EUserStatusCode.SUCCESS => "Operação realizada com sucesso",
-                _ => "Erro desconhecido"
+                _ => "Código de status desconhecido."
             };
         }
     }
