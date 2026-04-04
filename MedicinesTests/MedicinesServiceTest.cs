@@ -321,5 +321,58 @@ namespace MedicinesTests
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
         }
+
+        [Fact]
+        public async Task GetAllMedicinesAsyncSuccessTest()
+        {
+            const long userId = 1;
+
+            var medicines = new List<Medicine>
+            {
+                new Medicine
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "dipirona",
+                    UserId = userId,
+                    PillsQuantity = 30,
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0)
+                },
+                new Medicine
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "paracetamol",
+                    UserId = userId,
+                    PillsQuantity = 20,
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0)
+                }
+            };
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetAllMedicinesAsync(It.IsAny<long>())).ReturnsAsync(medicines);
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetAllMedicinesAsync(userId);
+
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public async Task GetAllMedicinesAsyncListErrorTest()
+        {
+            const long userId = 1;
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+
+            medicineRepository.Setup(m => m.GetAllMedicinesAsync(It.IsAny<long>())).ThrowsAsync(new Exception());
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetAllMedicinesAsync(userId);
+
+            Assert.False(result.IsSuccess);
+
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_LIST_ERROR, result.Error);
+        }
     }
 }
