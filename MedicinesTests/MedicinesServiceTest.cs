@@ -4,6 +4,9 @@ using Medicines.Models;
 using Medicines.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Linq.Expressions;
+using MockQueryable.Moq;
+using MockQueryable;
 
 namespace MedicinesTests
 {
@@ -583,6 +586,248 @@ namespace MedicinesTests
 
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
+        }
+
+        [Fact]
+        public async Task UpdateMedicineScheduleTimeAsyncNotFoundTest()
+        {
+            const string medicineName = "dipirona";
+            const long userId = 1;
+            var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null).Verifiable();
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_NOT_FOUND, result.Error);
+
+            medicineRepository.VerifyAll();
+        }
+
+        [Fact]
+        public async Task UpdateMedicineScheduleTimeAsyncMedicineInvalidTest()
+        {
+            Guid id = Guid.NewGuid();
+            const string medicineName = "dipirona";
+            const long userId = 1;
+            const int pillsQuantity = -30;
+            var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
+
+            var medicine = new Medicine
+            {
+                Id = id,
+                Name = medicineName,
+                UserId = userId,
+                PillsQuantity = pillsQuantity,
+                ScheduledTime = scheduleTime
+            };
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_DATA_INVALID, result.Error);
+
+            medicineRepository.VerifyAll();
+        }
+
+        [Fact]
+        public async Task UpdateMedicineScheduleTimeAsyncSuccessTest()
+        {
+            Guid id = Guid.NewGuid();
+            const string medicineName = "dipirona";
+            const long userId = 1;
+            const int pillsQuantity = 30;
+            var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
+
+            var medicine = new Medicine
+            {
+                Id = id,
+                Name = medicineName,
+                UserId = userId,
+                PillsQuantity = pillsQuantity,
+                ScheduledTime = scheduleTime
+            };
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask).Verifiable();
+
+            var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
+
+            Assert.True(result.IsSuccess);
+
+            medicineRepository.VerifyAll();
+            _repositoryManager.VerifyAll();
+        }
+
+        [Fact]
+        public async Task UpdateMedicineScheduleTimeAsyncUpdateErrorTest()
+        {
+            var id = Guid.NewGuid();
+            const string medicineName = "dipirona";
+            const long userId = 1;
+            const int pillsQuantity = 30;
+            var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
+
+            var medicine = new Medicine
+            {
+                Id = id,
+                Name = medicineName,
+                UserId = userId,
+                PillsQuantity = pillsQuantity,
+                ScheduledTime = scheduleTime
+            };
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+
+            var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
+
+            Assert.False(result.IsSuccess);
+
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR, result.Error);
+
+            medicineRepository.VerifyAll();
+            _repositoryManager.VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetMedicinesWithFewPillsSuccessTest()
+        {
+            const long userId = 1;
+
+            var medicines = new List<Medicine>
+            {
+                new Medicine
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "dipirona",
+                    UserId = userId,
+                    PillsQuantity = 5,
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0)
+                },
+                new Medicine
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "paracetamol",
+                    UserId = userId,
+                    PillsQuantity = 3,
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0)
+                }
+            };
+
+            var data = medicines.BuildMock();
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+
+            medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
+                              .Returns(data);
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetMedicinesWithFewPills(userId);
+
+            Assert.True(result.IsSuccess);
+
+            medicineRepository.VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetMedicinesWithFewPillListErrorTest()
+        {
+            const long userId = 1;
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+
+            medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
+                              .Throws(new Exception());
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetMedicinesWithFewPills(userId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_LIST_ERROR, result.Error);
+
+            medicineRepository.VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetMedicinesToTakeTodayAsyncSuccessTest()
+        {
+            const long userId = 1;
+
+            var medicines = new List<Medicine>
+            {
+                new Medicine
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "dipirona",
+                    UserId = userId,
+                    PillsQuantity = 5,
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0)
+                },
+                new Medicine
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "paracetamol",
+                    UserId = userId,
+                    PillsQuantity = 3,
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0)
+                }
+            };
+
+            var data = medicines.BuildMock();
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+
+            medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
+                              .Returns(data);
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetMedicinesToTakeTodayAsync(userId);
+
+            Assert.True(result.IsSuccess);
+
+            medicineRepository.VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetMedicinesToTakeTodayAsyncListErrorTest()
+        {
+            const long userId = 1;
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+
+            medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
+                              .Throws(new Exception());
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetMedicinesToTakeTodayAsync(userId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_LIST_ERROR, result.Error);
+
+            medicineRepository.VerifyAll();
         }
     }
 }
