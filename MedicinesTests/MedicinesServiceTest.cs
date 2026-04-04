@@ -111,7 +111,7 @@ namespace MedicinesTests
             medicineRepository.Setup(m => m.AddMedicine(It.IsAny<Medicine>())).Verifiable();
 
             _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Throws(new Exception()).Verifiable();
+            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
 
             var result = await _mediicinesService.AddMedicineAsync(medicineName, pillsQuantity, scheduledTime, userId);
 
@@ -227,12 +227,96 @@ namespace MedicinesTests
             medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
 
             _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Throws(new Exception()).Verifiable();
+            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
 
             var result = await _mediicinesService.AddMedicinePillsAsync(medicineName, pillsToAdd, userId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR, result.Error);
+
+            medicineRepository.VerifyAll();
+            _repositoryManager.VerifyAll();
+        }
+
+        [Fact]
+        public async Task DeleteMedicineAsyncMedicineNotFoundTest()
+        {
+            const string medicineName = "dipirona";
+            const long userId = 1;
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null);
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.DeleteMedicineAsync(medicineName, userId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_NOT_FOUND, result.Error);
+        }
+
+        [Fact]
+        public async Task DeleteMedicineAsyncSuccessTest()
+        {
+            Guid id = Guid.NewGuid();
+            const string medicineName = "dipirona";
+            const long userId = 1;
+            const int pillsQuantity = 30;
+            var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(5, 30, 0);
+
+            var medicine = new Medicine
+            {
+                Id = id,
+                Name = medicineName,
+                UserId = userId,
+                PillsQuantity = pillsQuantity,
+                ScheduledTime = scheduleTime
+            };
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.DeleteMedicine(It.IsAny<Medicine>())).Verifiable();
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask).Verifiable();
+
+            var result = await _mediicinesService.DeleteMedicineAsync(medicineName, userId);
+
+            Assert.True(result.IsSuccess);
+
+            medicineRepository.VerifyAll();
+            _repositoryManager.VerifyAll();
+        }
+
+        [Fact]
+        public async Task DeleteMedicineAsyncDeleteErrorTest()
+        {
+            Guid id = Guid.NewGuid();
+            const string medicineName = "dipirona";
+            const long userId = 1;
+            const int pillsQuantity = 30;
+            var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(5, 30, 0);
+
+            var medicine = new Medicine
+            {
+                Id = id,
+                Name = medicineName,
+                UserId = userId,
+                PillsQuantity = pillsQuantity,
+                ScheduledTime = scheduleTime
+            };
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.DeleteMedicine(It.IsAny<Medicine>())).Verifiable();
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+
+            var result = await _mediicinesService.DeleteMedicineAsync(medicineName, userId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_DELETE_ERROR, result.Error);
 
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
