@@ -152,6 +152,8 @@ namespace Medicines.Services
                 if (medicine is not null)
                 {
                     var tz = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+                    medicine.PillsQuantity -= (int)(DateTimeOffset.UtcNow - medicine.RegisteredDate).TotalDays;
+                    medicine.PillsQuantity = Math.Max(0, medicine.PillsQuantity);
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
                 }

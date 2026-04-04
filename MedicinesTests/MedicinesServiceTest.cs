@@ -374,5 +374,49 @@ namespace MedicinesTests
 
             Assert.Equal(EMedicinesStatusCode.MEDICINE_LIST_ERROR, result.Error);
         }
+
+        [Fact]
+        public async Task GetMedicineByIdAsyncSuccessTest()
+        {
+            Guid id = Guid.NewGuid();
+            const string medicineName = "dipirona";
+            const long userId = 1;
+            const int pillsQuantity = 30;
+            var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
+
+            var medicine = new Medicine
+            {
+                Id = id,
+                Name = medicineName,
+                UserId = userId,
+                PillsQuantity = pillsQuantity,
+                ScheduledTime =scheduleTime
+            };
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>())).ReturnsAsync(medicine);
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetMedicineByIdAsync(id);
+
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public async Task GetMedicineByIdAsyncGetErrorTest()
+        {
+            Guid id = Guid.NewGuid();
+
+            var medicineRepository = new Mock<IMedicineRepository>();
+            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>())).ThrowsAsync(new Exception());
+
+            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+
+            var result = await _mediicinesService.GetMedicineByIdAsync(id);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(EMedicinesStatusCode.MEDICINE_GET_ERROR, result.Error);
+        }
     }
 }
