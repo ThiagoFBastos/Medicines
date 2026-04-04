@@ -46,14 +46,19 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.AddMedicineAsync(medicineName, pillsQuantity, scheduledTime, userId);
 
             Assert.False(result.IsSuccess);
+
             Assert.Equal(EMedicinesStatusCode.MEDICINE_ALREADY_EXISTS, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -66,14 +71,19 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null);
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync((Medicine?)null);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.AddMedicineAsync(medicineName, pillsQuantity, scheduledTime, userId);
 
             Assert.False(result.IsSuccess);
+
             Assert.Equal(EMedicinesStatusCode.MEDICINE_DATA_INVALID, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -86,11 +96,14 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null);
-            medicineRepository.Setup(m => m.AddMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync((Medicine?)null);
+            medicineRepository.Setup(m => m.AddMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .Returns(Task.CompletedTask);
 
             var result = await _mediicinesService.AddMedicineAsync(medicineName, pillsQuantity, scheduledTime, userId);
 
@@ -110,11 +123,14 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null);
-            medicineRepository.Setup(m => m.AddMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync((Medicine?)null);
+            medicineRepository.Setup(m => m.AddMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .ThrowsAsync(new Exception());
 
             var result = await _mediicinesService.AddMedicineAsync(medicineName, pillsQuantity, scheduledTime, userId);
 
@@ -133,14 +149,18 @@ namespace MedicinesTests
             const int pillsToAdd = 10;
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null);
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync((Medicine?)null);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.AddMedicinePillsAsync(medicine, pillsToAdd, userId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EMedicinesStatusCode.MEDICINE_NOT_FOUND, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -163,14 +183,18 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.AddMedicinePillsAsync(medicineName, pillsToAdd, userId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EMedicinesStatusCode.MEDICINE_DATA_INVALID, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -193,11 +217,14 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
-            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .Returns(Task.CompletedTask);
 
             var result = await _mediicinesService.AddMedicinePillsAsync(medicineName, pillsToAdd, userId);
 
@@ -226,11 +253,14 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
-            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .ThrowsAsync(new Exception());
 
             var result = await _mediicinesService.AddMedicinePillsAsync(medicineName, pillsToAdd, userId);
 
@@ -248,14 +278,18 @@ namespace MedicinesTests
             const long userId = 1;
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null);
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync((Medicine?)null);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.DeleteMedicineAsync(medicineName, userId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EMedicinesStatusCode.MEDICINE_NOT_FOUND, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -277,11 +311,14 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
-            medicineRepository.Setup(m => m.DeleteMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.DeleteMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .Returns(Task.CompletedTask);
 
             var result = await _mediicinesService.DeleteMedicineAsync(medicineName, userId);
 
@@ -310,11 +347,14 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine);
-            medicineRepository.Setup(m => m.DeleteMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.DeleteMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .ThrowsAsync(new Exception());
 
             var result = await _mediicinesService.DeleteMedicineAsync(medicineName, userId);
 
@@ -351,13 +391,17 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetAllMedicinesAsync(It.IsAny<long>())).ReturnsAsync(medicines);
+            medicineRepository.Setup(m => m.GetAllMedicinesAsync(It.IsAny<long>()))
+                              .ReturnsAsync(medicines);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetAllMedicinesAsync(userId);
 
             Assert.True(result.IsSuccess);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -367,15 +411,19 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetAllMedicinesAsync(It.IsAny<long>())).ThrowsAsync(new Exception());
+            medicineRepository.Setup(m => m.GetAllMedicinesAsync(It.IsAny<long>()))
+                              .ThrowsAsync(new Exception());
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetAllMedicinesAsync(userId);
 
             Assert.False(result.IsSuccess);
 
             Assert.Equal(EMedicinesStatusCode.MEDICINE_LIST_ERROR, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -397,13 +445,17 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>())).ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>()))
+                              .ReturnsAsync(medicine);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicineByIdAsync(id);
 
             Assert.True(result.IsSuccess);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -412,14 +464,18 @@ namespace MedicinesTests
             Guid id = Guid.NewGuid();
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>())).ThrowsAsync(new Exception());
+            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>()))
+                              .ThrowsAsync(new Exception());
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicineByIdAsync(id);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EMedicinesStatusCode.MEDICINE_GET_ERROR, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -441,13 +497,17 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>())).ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>()))
+                              .ReturnsAsync(medicine);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicineByNameAsync(medicineName, userId);
 
             Assert.True(result.IsSuccess);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -457,14 +517,18 @@ namespace MedicinesTests
             const long userId = 1;
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ThrowsAsync(new Exception());
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ThrowsAsync(new Exception());
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicineByNameAsync(medicineName, userId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EMedicinesStatusCode.MEDICINE_GET_ERROR, result.Error);
+
+            medicineRepository.VerifyAll();
         }
 
         [Fact]
@@ -476,9 +540,11 @@ namespace MedicinesTests
             var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync((Medicine?)null);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.UpdateMedicineAsync(medicineName, pillsQuantity, scheduleTime, userId);
 
@@ -507,9 +573,11 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.UpdateMedicineAsync(medicineName, pillsQuantity, scheduleTime, userId);
 
@@ -538,11 +606,14 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
-            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .Returns(Task.CompletedTask);
 
             var result = await _mediicinesService.UpdateMedicineAsync(medicineName, pillsQuantity, scheduleTime, userId);
 
@@ -572,11 +643,14 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
-            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .ThrowsAsync(new Exception());
 
             var result = await _mediicinesService.UpdateMedicineAsync(medicineName, pillsQuantity, scheduleTime, userId);
 
@@ -596,9 +670,11 @@ namespace MedicinesTests
             var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync((Medicine?)null).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync((Medicine?)null);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
 
@@ -627,9 +703,11 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
 
@@ -658,11 +736,14 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
-            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .Returns(Task.CompletedTask);
 
             var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
 
@@ -692,11 +773,14 @@ namespace MedicinesTests
 
             var medicineRepository = new Mock<IMedicineRepository>();
 
-            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>())).ReturnsAsync(medicine).Verifiable();
-            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>())).Verifiable();
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
+                              .ReturnsAsync(medicine);
+            medicineRepository.Setup(m => m.UpdateMedicine(It.IsAny<Medicine>()));
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .ThrowsAsync(new Exception());
 
             var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
 
@@ -740,7 +824,8 @@ namespace MedicinesTests
             medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
                               .Returns(data);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicinesWithFewPills(userId);
 
@@ -759,7 +844,8 @@ namespace MedicinesTests
             medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
                               .Throws(new Exception());
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicinesWithFewPills(userId);
 
@@ -801,7 +887,8 @@ namespace MedicinesTests
             medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
                               .Returns(data);
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicinesToTakeTodayAsync(userId);
 
@@ -820,7 +907,8 @@ namespace MedicinesTests
             medicineRepository.Setup(m => m.FindByCondition(It.IsAny<Expression<Func<Medicine, bool>>>()))
                               .Throws(new Exception());
 
-            _repositoryManager.SetupGet(r => r.MedicineRepository).Returns(medicineRepository.Object);
+            _repositoryManager.SetupGet(r => r.MedicineRepository)
+                              .Returns(medicineRepository.Object);
 
             var result = await _mediicinesService.GetMedicinesToTakeTodayAsync(userId);
 

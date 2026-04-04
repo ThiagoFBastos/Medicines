@@ -34,8 +34,11 @@ namespace MedicinesTests
 
             var user = new User { UserId = userId, Username = username };
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync(user);
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync(user);
+
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.AddUserAsync(userId, username);
 
@@ -44,6 +47,8 @@ namespace MedicinesTests
             var error = result.Error;
 
             Assert.Equal(EUserStatusCode.USER_ALREADY_EXISTS, error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -54,8 +59,11 @@ namespace MedicinesTests
             const long userId = 1;
             const string username = "$$$";
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync((User?)null);
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync((User?)null);
+
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.AddUserAsync(userId, username);
 
@@ -64,6 +72,8 @@ namespace MedicinesTests
             var error = result.Error;
 
             Assert.Equal(EUserStatusCode.USER_DATA_INVALID, error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -73,18 +83,20 @@ namespace MedicinesTests
             const long userId = 1;
             const string username = "testuser";
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync((User?)null);
-            userRepository.Setup(u => u.AddUser(It.IsAny<User>())).Verifiable();
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync((User?)null);
+            userRepository.Setup(u => u.AddUser(It.IsAny<User>()));
 
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Verifiable();
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync());
 
             var result = await _userService.AddUserAsync(userId, username);
 
+            Assert.True(result.IsSuccess);
+
             userRepository.VerifyAll();
             _repositoryManager.VerifyAll();
-
-            Assert.True(result.IsSuccess);
         }
 
         [Fact]
@@ -94,19 +106,22 @@ namespace MedicinesTests
             const long userId = 1;
             const string username = "testuser";
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync((User?)null);
-            userRepository.Setup(u => u.AddUser(It.IsAny<User>())).Verifiable();
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync((User?)null);
+            userRepository.Setup(u => u.AddUser(It.IsAny<User>()));
 
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .ThrowsAsync(new Exception());
 
             var result = await _userService.AddUserAsync(userId, username);
 
-            userRepository.VerifyAll();
-            _repositoryManager.VerifyAll();
-
             Assert.False(result.IsSuccess);
             Assert.Equal(EUserStatusCode.USER_ADD_ERROR, result.Error);
+
+            userRepository.VerifyAll();
+            _repositoryManager.VerifyAll();
         }
 
         [Fact]
@@ -115,15 +130,19 @@ namespace MedicinesTests
             var userRepository = new Mock<IUserRepository>();
             const long userId = 1;
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync((User?)null);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync((User?)null);
 
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.DeleteUserAsync(userId);
 
             Assert.False(result.IsSuccess);
 
             Assert.Equal(EUserStatusCode.USER_NOT_FOUND, result.Error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -135,11 +154,13 @@ namespace MedicinesTests
 
             var user = new User { UserId = userId, Username = username };
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync(user);
-            userRepository.Setup(u => u.DeleteUser(It.IsAny<User>())).Verifiable();
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync(user);
+            userRepository.Setup(u => u.DeleteUser(It.IsAny<User>()));
 
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Verifiable();
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync());
 
             var result = await _userService.DeleteUserAsync(userId);
 
@@ -158,11 +179,14 @@ namespace MedicinesTests
 
             var user = new User { UserId = userId, Username = username };
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync(user);
-            userRepository.Setup(u => u.DeleteUser(It.IsAny<User>())).Verifiable();
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync(user);
+            userRepository.Setup(u => u.DeleteUser(It.IsAny<User>()));
 
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                               .ThrowsAsync(new Exception());
 
             var result = await _userService.DeleteUserAsync(userId);
 
@@ -184,13 +208,17 @@ namespace MedicinesTests
                 new User { UserId = 2, Username = "testuser2" }
             };
 
-            userRepository.Setup(u => u.GetAllUsersAsync()).ReturnsAsync(users);
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetAllUsersAsync())
+                          .ReturnsAsync(users);
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.GetAllUsersAsync();
 
             Assert.True(result.IsSuccess);
             Assert.Equal(users, result.Value);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -198,13 +226,17 @@ namespace MedicinesTests
         {
             var userRepository = new Mock<IUserRepository>();
 
-            userRepository.Setup(u => u.GetAllUsersAsync()).ThrowsAsync(new Exception());
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetAllUsersAsync())
+                          .ThrowsAsync(new Exception());
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.GetAllUsersAsync();
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EUserStatusCode.USER_LIST_ERROR, result.Error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -213,13 +245,18 @@ namespace MedicinesTests
             var userRepository = new Mock<IUserRepository>();
             const long userId = 1;
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync((User?)null);
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync((User?)null);
+
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.GetUserByUserIdAsync(userId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EUserStatusCode.USER_NOT_FOUND, result.Error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -230,13 +267,18 @@ namespace MedicinesTests
             const string username = "testuser";
             var user = new User { UserId = userId, Username = username };
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync(user);
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync(user);
+
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.GetUserByUserIdAsync(userId);
 
             Assert.True(result.IsSuccess);
             Assert.Equal(user, result.Value);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -245,13 +287,18 @@ namespace MedicinesTests
             var userRepository = new Mock<IUserRepository>();
             const long userId = 1;
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ThrowsAsync(new Exception());
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ThrowsAsync(new Exception());
+
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.GetUserByUserIdAsync(userId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EUserStatusCode.USER_GET_ERROR, result.Error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -261,13 +308,18 @@ namespace MedicinesTests
             const long userId = 1;
             const string username = "testuser";
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync((User?)null);
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync((User?)null);
+
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.UpdateUserAsync(userId, username);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EUserStatusCode.USER_NOT_FOUND, result.Error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -278,13 +330,18 @@ namespace MedicinesTests
             const string username = "$$$";
             var user = new User { UserId = userId, Username = "testuser" };
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync(user);
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync(user);
+
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
 
             var result = await _userService.UpdateUserAsync(userId, username);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(EUserStatusCode.USER_DATA_INVALID, result.Error);
+
+            userRepository.VerifyAll();
         }
 
         [Fact]
@@ -296,11 +353,13 @@ namespace MedicinesTests
             const string newUsername = "newtestuser";
             var user = new User { UserId = userId, Username = username };
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync(user);
-            userRepository.Setup(u => u.UpdateUser(It.IsAny<User>())).Verifiable();
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync(user);
+            userRepository.Setup(u => u.UpdateUser(It.IsAny<User>()));
 
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Verifiable();
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync());
 
             var result = await _userService.UpdateUserAsync(userId, newUsername);
 
@@ -319,11 +378,14 @@ namespace MedicinesTests
             const string newUsername = "newtestuser";
             var user = new User { UserId = userId, Username = username };
 
-            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>())).ReturnsAsync(user);
-            userRepository.Setup(u => u.UpdateUser(It.IsAny<User>())).Verifiable();
+            userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
+                          .ReturnsAsync(user);
+            userRepository.Setup(u => u.UpdateUser(It.IsAny<User>()));
 
-            _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
+            _repositoryManager.SetupGet(r => r.UserRepository)
+                              .Returns(userRepository.Object);
+            _repositoryManager.Setup(r => r.SaveAsync())
+                              .ThrowsAsync(new Exception());
 
             var result = await _userService.UpdateUserAsync(userId, newUsername);
 
@@ -332,7 +394,6 @@ namespace MedicinesTests
 
             userRepository.VerifyAll();
             _repositoryManager.VerifyAll();
-
         }
     }
 }
