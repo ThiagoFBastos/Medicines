@@ -162,7 +162,7 @@ namespace MedicinesTests
             userRepository.Setup(u => u.DeleteUser(It.IsAny<User>())).Verifiable();
 
             _repositoryManager.SetupGet(r => r.UserRepository).Returns(userRepository.Object);
-            _repositoryManager.Setup(r => r.SaveAsync()).Throws(new Exception()).Verifiable();
+            _repositoryManager.Setup(r => r.SaveAsync()).ThrowsAsync(new Exception()).Verifiable();
 
             var result = await _userService.DeleteUserAsync(userId);
 
