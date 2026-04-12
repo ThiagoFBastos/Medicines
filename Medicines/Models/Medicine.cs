@@ -30,7 +30,7 @@ namespace Medicines.Models
         {
             var match = Regex.Match(Name, @"^[A-Za-z\s]+$");
 
-            return !string.IsNullOrEmpty(Name) && PillsQuantity >= 0 && match.Success;
+            return !string.IsNullOrEmpty(Name) && PillsQuantity >= 0 && match.Success && ScheduledTime.Offset == TimeSpan.Zero && RegisteredDate.Offset == TimeSpan.Zero;
         }
     }
 }
