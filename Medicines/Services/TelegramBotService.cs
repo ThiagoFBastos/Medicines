@@ -123,11 +123,11 @@ namespace Medicines.Services
             {
                 string medicine = match.Groups[1].Value;
                 int quantity = int.Parse(match.Groups[2].Value);
-                int hour = int.Parse(match.Groups[3].Value);
+                int hours = int.Parse(match.Groups[3].Value);
                 int minutes = int.Parse(match.Groups[4].Value);
-                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hour, minutes, 0);
+                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
 
-                var addResult = await _medicinesService.AddMedicineAsync(medicine, quantity, scheduledTime.ToLocalTime(), msg.From!.Id);
+                var addResult = await _medicinesService.AddMedicineAsync(medicine, quantity, scheduledTime.ToUniversalTime(), msg.From!.Id);
 
                 if(addResult.IsSuccess)
                 {
@@ -362,11 +362,11 @@ namespace Medicines.Services
             if (match.Success)
             {
                 string medicine = match.Groups[1].Value;
-                int hour = int.Parse(match.Groups[2].Value);
+                int hours = int.Parse(match.Groups[2].Value);
                 int minutes = int.Parse(match.Groups[3].Value);
-                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hour, minutes, 0);
+                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
 
-                var updateScheduleResult = await _medicinesService.UpdateMedicineScheduledTime(medicine, scheduledTime.ToLocalTime(), msg.From!.Id);
+                var updateScheduleResult = await _medicinesService.UpdateMedicineScheduledTime(medicine, scheduledTime.ToUniversalTime(), msg.From!.Id);
 
                 if (updateScheduleResult.IsSuccess)
                 {
@@ -416,7 +416,7 @@ namespace Medicines.Services
 
                 var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
 
-                var updateResult = await _medicinesService.UpdateMedicineAsync(medicine, pillsQuantity, scheduledTime.ToLocalTime(), msg.From!.Id);
+                var updateResult = await _medicinesService.UpdateMedicineAsync(medicine, pillsQuantity, scheduledTime.ToUniversalTime(), msg.From!.Id);
 
                 if (updateResult.IsSuccess)
                 {
