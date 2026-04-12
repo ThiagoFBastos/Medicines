@@ -336,7 +336,7 @@ namespace Medicines.Services
             }
         }
 
-        public async Task ScheduleAsync(Message msg, UpdateType update)
+        private async Task ScheduleAsync(Message msg, UpdateType update)
         {
             if (msg is null)
                 return;
@@ -384,7 +384,7 @@ namespace Medicines.Services
             }
         }
 
-        public async Task UpdateAsync(Message msg, UpdateType update)
+        private async Task UpdateAsync(Message msg, UpdateType update)
         {
             if (msg is null)
                 return;
@@ -434,13 +434,13 @@ namespace Medicines.Services
             }
         }
 
-        public async Task OnError(Exception exception, HandleErrorSource source)
+        private async Task OnError(Exception exception, HandleErrorSource source)
         {
             _logger.LogError(exception, exception.Message);
             await Task.CompletedTask;
         }
 
-        public async Task OnMessage(Message msg, UpdateType type)
+        private async Task OnMessage(Message msg, UpdateType type)
         {
             if (msg?.Text is null)
             {
@@ -499,7 +499,7 @@ namespace Medicines.Services
             }
         }
 
-        public async Task OnUpdate(Update update)
+        private async Task OnUpdate(Update update)
         {
             await Task.CompletedTask;
         }
