@@ -232,7 +232,6 @@ namespace MedicinesTests
             {
                 Assert.Equal(expectedUsers.ElementAt(i).UserId, actualUsers.ElementAt(i).UserId);
                 Assert.Equal(expectedUsers.ElementAt(i).Username, actualUsers.ElementAt(i).Username);
-                // TODO see if the register date is in the same time zone
             }
 
             userRepository.VerifyAll();

@@ -108,6 +108,7 @@ namespace MedicinesTests
             var result = await _mediicinesService.AddMedicineAsync(medicineName, pillsQuantity, scheduledTime, userId);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
@@ -229,6 +230,7 @@ namespace MedicinesTests
             var result = await _mediicinesService.AddMedicinePillsAsync(medicineName, pillsToAdd, userId);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
@@ -323,6 +325,7 @@ namespace MedicinesTests
             var result = await _mediicinesService.DeleteMedicineAsync(medicineName, userId);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
@@ -378,7 +381,8 @@ namespace MedicinesTests
                     Name = "dipirona",
                     UserId = userId,
                     PillsQuantity = 30,
-                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0)
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0),
+                    RegisteredDate = DateTimeOffset.UtcNow.AddDays(-10)
                 },
                 new Medicine
                 {
@@ -386,9 +390,12 @@ namespace MedicinesTests
                     Name = "paracetamol",
                     UserId = userId,
                     PillsQuantity = 20,
-                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0)
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0),
+                    RegisteredDate = DateTimeOffset.UtcNow.AddDays(-5)
                 }
             };
+
+            int[] expectedPills = new int[] { 20, 15 };
 
             var medicineRepository = new Mock<IMedicineRepository>();
             medicineRepository.Setup(m => m.GetAllMedicinesAsync(It.IsAny<long>()))
@@ -400,6 +407,21 @@ namespace MedicinesTests
             var result = await _mediicinesService.GetAllMedicinesAsync(userId);
 
             Assert.True(result.IsSuccess);
+
+            var actualMedicines = result.Value;
+
+            Assert.NotNull(actualMedicines);
+            Assert.Equal(medicines.Count, actualMedicines.Count());
+
+            for (int i = 0; i < medicines.Count; i++)
+            {
+                Assert.Equal(medicines[i].Id, actualMedicines.ElementAt(i).Id);
+                Assert.Equal(medicines[i].Name, actualMedicines.ElementAt(i).Name);
+                Assert.Equal(medicines[i].UserId, actualMedicines.ElementAt(i).UserId);
+                Assert.Equal(expectedPills[i], actualMedicines.ElementAt(i).PillsQuantity);
+                Assert.Equal(medicines[i].ScheduledTime.ToUniversalTime(), actualMedicines.ElementAt(i).ScheduledTime.ToUniversalTime());
+                Assert.Equal(medicines[i].RegisteredDate.ToUniversalTime(), actualMedicines.ElementAt(i).RegisteredDate.ToUniversalTime());
+            }
 
             medicineRepository.VerifyAll();
         }
@@ -426,14 +448,19 @@ namespace MedicinesTests
             medicineRepository.VerifyAll();
         }
 
-        [Fact]
-        public async Task GetMedicineByIdAsyncSuccessTest()
+        [Theory]
+        [InlineData(25)]
+        [InlineData(39)]
+        [InlineData(40)]
+        public async Task GetMedicineByIdAsyncSuccessTest(int days)
         {
             Guid id = Guid.NewGuid();
             const string medicineName = "dipirona";
             const long userId = 1;
             const int pillsQuantity = 30;
             var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
+            var registeredDate = DateTimeOffset.UtcNow.AddDays(-days);
+            int expectedPills = Math.Max(0, pillsQuantity - days);
 
             var medicine = new Medicine
             {
@@ -441,7 +468,8 @@ namespace MedicinesTests
                 Name = medicineName,
                 UserId = userId,
                 PillsQuantity = pillsQuantity,
-                ScheduledTime = scheduleTime
+                ScheduledTime = scheduleTime,
+                RegisteredDate = registeredDate
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
@@ -454,6 +482,17 @@ namespace MedicinesTests
             var result = await _mediicinesService.GetMedicineByIdAsync(id);
 
             Assert.True(result.IsSuccess);
+            
+            var actualMedicine = result.Value;
+
+            Assert.NotNull(actualMedicine);
+
+            Assert.Equal(medicine.Id, actualMedicine.Id);
+            Assert.Equal(medicine.Name, actualMedicine.Name);
+            Assert.Equal(medicine.UserId, actualMedicine.UserId);
+            Assert.Equal(expectedPills, actualMedicine.PillsQuantity);
+            Assert.Equal(medicine.ScheduledTime.ToUniversalTime(), actualMedicine.ScheduledTime.ToUniversalTime());
+            Assert.Equal(medicine.RegisteredDate.ToUniversalTime(), actualMedicine.RegisteredDate.ToUniversalTime());
 
             medicineRepository.VerifyAll();
         }
@@ -478,14 +517,19 @@ namespace MedicinesTests
             medicineRepository.VerifyAll();
         }
 
-        [Fact]
-        public async Task GetMedicineByNameAsyncSuccessTest()
+        [Theory]
+        [InlineData(10)]
+        [InlineData(20)]
+        [InlineData(50)]
+        public async Task GetMedicineByNameAsyncSuccessTest(int days)
         {
             Guid id = Guid.NewGuid();
             const string medicineName = "dipirona";
             const long userId = 1;
             const int pillsQuantity = 30;
             var scheduleTime = DateTimeOffset.UtcNow + new TimeSpan(16, 30, 0);
+            var registredDate = DateTimeOffset.UtcNow.AddDays(-days);
+            int expectedPills = Math.Max(0, pillsQuantity - days);
 
             var medicine = new Medicine
             {
@@ -493,7 +537,8 @@ namespace MedicinesTests
                 Name = medicineName,
                 UserId = userId,
                 PillsQuantity = pillsQuantity,
-                ScheduledTime = scheduleTime
+                ScheduledTime = scheduleTime,
+                RegisteredDate = registredDate
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
@@ -506,6 +551,17 @@ namespace MedicinesTests
             var result = await _mediicinesService.GetMedicineByNameAsync(medicineName, userId);
 
             Assert.True(result.IsSuccess);
+
+            var actualMedicine = result.Value;
+
+            Assert.NotNull(actualMedicine);
+
+            Assert.Equal(medicine.Id, actualMedicine.Id);
+            Assert.Equal(medicine.Name, actualMedicine.Name);
+            Assert.Equal(medicine.UserId, actualMedicine.UserId);
+            Assert.Equal(expectedPills, actualMedicine.PillsQuantity);
+            Assert.Equal(medicine.ScheduledTime.ToUniversalTime(), actualMedicine.ScheduledTime.ToUniversalTime());
+            Assert.Equal(medicine.RegisteredDate.ToUniversalTime(), actualMedicine.RegisteredDate.ToUniversalTime());
 
             medicineRepository.VerifyAll();
         }
@@ -618,6 +674,7 @@ namespace MedicinesTests
             var result = await _mediicinesService.UpdateMedicineAsync(medicineName, pillsQuantity, scheduleTime, userId);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
@@ -748,6 +805,7 @@ namespace MedicinesTests
             var result = await _mediicinesService.UpdateMedicineScheduledTime(medicineName, scheduleTime, userId);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             medicineRepository.VerifyAll();
             _repositoryManager.VerifyAll();
@@ -805,7 +863,8 @@ namespace MedicinesTests
                     Name = "dipirona",
                     UserId = userId,
                     PillsQuantity = 5,
-                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0)
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0),
+                    RegisteredDate = DateTimeOffset.UtcNow - new TimeSpan(-12, 59, 59)
                 },
                 new Medicine
                 {
@@ -813,9 +872,11 @@ namespace MedicinesTests
                     Name = "paracetamol",
                     UserId = userId,
                     PillsQuantity = 3,
-                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0)
+                    ScheduledTime = DateTimeOffset.UtcNow - new TimeSpan(-12, 59, 59)
                 }
             };
+
+            int[] expectedPills = new int[] { 5, 3 };
 
             var data = medicines.BuildMock();
 
@@ -830,6 +891,21 @@ namespace MedicinesTests
             var result = await _mediicinesService.GetMedicinesWithFewPills(userId);
 
             Assert.True(result.IsSuccess);
+
+            var actualMedicines = result.Value;
+
+            Assert.NotNull(actualMedicines);
+            Assert.Equal(medicines.Count, actualMedicines.Count());
+
+            for (int i = 0; i < medicines.Count; i++)
+            {
+                Assert.Equal(medicines[i].Id, actualMedicines.ElementAt(i).Id);
+                Assert.Equal(medicines[i].Name, actualMedicines.ElementAt(i).Name);
+                Assert.Equal(medicines[i].UserId, actualMedicines.ElementAt(i).UserId);
+                Assert.Equal(expectedPills[i], actualMedicines.ElementAt(i).PillsQuantity);
+                Assert.Equal(medicines[i].ScheduledTime.ToUniversalTime(), actualMedicines.ElementAt(i).ScheduledTime.ToUniversalTime());
+                Assert.Equal(medicines[i].RegisteredDate.ToUniversalTime(), actualMedicines.ElementAt(i).RegisteredDate.ToUniversalTime());
+            }
 
             medicineRepository.VerifyAll();
         }
@@ -868,7 +944,8 @@ namespace MedicinesTests
                     Name = "dipirona",
                     UserId = userId,
                     PillsQuantity = 5,
-                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0)
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(12, 30, 0),
+                    RegisteredDate = DateTimeOffset.UtcNow - new TimeSpan(-12, 59, 59)
                 },
                 new Medicine
                 {
@@ -876,9 +953,12 @@ namespace MedicinesTests
                     Name = "paracetamol",
                     UserId = userId,
                     PillsQuantity = 3,
-                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0)
+                    ScheduledTime = DateTimeOffset.UtcNow + new TimeSpan(10, 0, 0),
+                    RegisteredDate = DateTimeOffset.UtcNow.AddDays(-1)
                 }
             };
+
+            int[] expectedPills = new int[] { 5, 2 };
 
             var data = medicines.BuildMock();
 
@@ -893,6 +973,21 @@ namespace MedicinesTests
             var result = await _mediicinesService.GetMedicinesToTakeTodayAsync(userId);
 
             Assert.True(result.IsSuccess);
+
+            var actualMedicines = result.Value;
+
+            Assert.NotNull(actualMedicines);
+            Assert.Equal(medicines.Count, actualMedicines.Count());
+
+            for (int i = 0; i < medicines.Count; i++)
+            {
+                Assert.Equal(medicines[i].Id, actualMedicines.ElementAt(i).Id);
+                Assert.Equal(medicines[i].Name, actualMedicines.ElementAt(i).Name);
+                Assert.Equal(medicines[i].UserId, actualMedicines.ElementAt(i).UserId);
+                Assert.Equal(expectedPills[i], actualMedicines.ElementAt(i).PillsQuantity);
+                Assert.Equal(medicines[i].ScheduledTime.ToUniversalTime(), actualMedicines.ElementAt(i).ScheduledTime.ToUniversalTime());
+                Assert.Equal(medicines[i].RegisteredDate.ToUniversalTime(), actualMedicines.ElementAt(i).RegisteredDate.ToUniversalTime());
+            }
 
             medicineRepository.VerifyAll();
         }
