@@ -83,6 +83,7 @@ namespace MedicinesTests
             const long userId = 1;
             const string username = "testuser";
 
+
             userRepository.Setup(u => u.GetUserByUserIdAsync(It.IsAny<long>()))
                           .ReturnsAsync((User?)null);
             userRepository.Setup(u => u.AddUser(It.IsAny<User>()));
@@ -94,6 +95,7 @@ namespace MedicinesTests
             var result = await _userService.AddUserAsync(userId, username);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             userRepository.VerifyAll();
             _repositoryManager.VerifyAll();
@@ -165,6 +167,7 @@ namespace MedicinesTests
             var result = await _userService.DeleteUserAsync(userId);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             userRepository.VerifyAll();
             _repositoryManager.VerifyAll();
@@ -208,6 +211,8 @@ namespace MedicinesTests
                 new User { UserId = 2, Username = "testuser2" }
             };
 
+            var expectedUsers = users.AsEnumerable();
+
             userRepository.Setup(u => u.GetAllUsersAsync())
                           .ReturnsAsync(users);
             _repositoryManager.SetupGet(r => r.UserRepository)
@@ -216,7 +221,19 @@ namespace MedicinesTests
             var result = await _userService.GetAllUsersAsync();
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(users, result.Value);
+            
+            var actualUsers = result.Value;
+
+            Assert.NotNull(actualUsers);
+
+            Assert.Equal(expectedUsers.Count(), actualUsers.Count());
+
+            for(int i = 0; i < actualUsers.Count(); ++i)
+            {
+                Assert.Equal(expectedUsers.ElementAt(i).UserId, actualUsers.ElementAt(i).UserId);
+                Assert.Equal(expectedUsers.ElementAt(i).Username, actualUsers.ElementAt(i).Username);
+                // TODO see if the register date is in the same time zone
+            }
 
             userRepository.VerifyAll();
         }
@@ -276,7 +293,12 @@ namespace MedicinesTests
             var result = await _userService.GetUserByUserIdAsync(userId);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(user, result.Value);
+            
+            var actualUser = result.Value;
+
+            Assert.NotNull(actualUser);
+            Assert.Equal(userId, actualUser.UserId);
+            Assert.Equal(username, actualUser.Username);
 
             userRepository.VerifyAll();
         }
@@ -364,6 +386,7 @@ namespace MedicinesTests
             var result = await _userService.UpdateUserAsync(userId, newUsername);
 
             Assert.True(result.IsSuccess);
+            Assert.True(result.Value);
 
             userRepository.VerifyAll();
             _repositoryManager.VerifyAll();

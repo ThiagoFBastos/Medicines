@@ -497,7 +497,7 @@ namespace MedicinesTests
             };
 
             var medicineRepository = new Mock<IMedicineRepository>();
-            medicineRepository.Setup(m => m.GetMedicineByIdAsync(It.IsAny<Guid>()))
+            medicineRepository.Setup(m => m.GetMedicineByNameAsync(It.IsAny<string>(), It.IsAny<long>()))
                               .ReturnsAsync(medicine);
 
             _repositoryManager.SetupGet(r => r.MedicineRepository)
