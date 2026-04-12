@@ -16,9 +16,10 @@
 - Docker
 - Docker Compose
 - Postgres
-- Worker Class
+- Background Service
 - telegrambots
 - Entity Framework Core
+- Moq
 
 
 <h2 id="started">🚀 Getting started</h2>
@@ -35,6 +36,18 @@
 - <b>/help</b> - Exibe esta mensagem de ajuda. <br>
 <br>
 Obs: the bot talks with the user in portuguese
+
+<h3> Examples</h3>
+
+- <b>/start usertest</b>
+- <b>/add dipirona 20 10:00</b>
+- <b>/remove dipirona</b>
+- <b>/lookup dipirona</b>
+- <b>/list</b>
+- <b>/pills dipirona 5</b>
+- <b>/schedule dipirona 13:00</b>
+- <b>/update dipirona 30 16:00</b>
+- <b>/help</b>
 
 <h3>Prerequisites</h3>
 

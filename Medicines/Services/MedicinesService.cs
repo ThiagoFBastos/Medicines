@@ -31,7 +31,7 @@ namespace Medicines.Services
 
                 if (result.Value is not null)
                 {
-                    _logger.LogInformation($"The medicine {name} of user {userId} already exists");
+                    _logger.LogInformation($"The medicine {name} for user {userId} already exists");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_ALREADY_EXISTS);
                 }
 
@@ -45,13 +45,13 @@ namespace Medicines.Services
                 _repositoryManager.MedicineRepository.AddMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O remédio {name} do usuário {userId} foi cadastrado com {pillsQuantity} comprimidos e horário {scheduledTime:HH:mm}");
+                _logger.LogInformation($"The medicine {name} for user {userId} was added with {pillsQuantity} pills and {scheduledTime:HH:mm} schedule time");
 
                 return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while adding the medicine {name} of user {userId}");
+                _logger.LogError(ex, $"An error occurred while adding the medicine {name} for user {userId}");
                 return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_ADD_ERROR);
             }
         }
@@ -78,13 +78,13 @@ namespace Medicines.Services
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O número de comprimidos do remédio {name} do usuário {userId} foi atualizado para {medicine.PillsQuantity}");
+                _logger.LogInformation($"The number of pills for medicine {name} for user {userId} was updated to {medicine.PillsQuantity}");
 
                 return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while updating the number of pills of the medicine {name} of user {userId}");
+                _logger.LogError(ex, $"An error occurred while updating the number of pills of the medicine {name} for user {userId}");
                 return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR);
             }
         }
@@ -97,20 +97,20 @@ namespace Medicines.Services
 
                 if (medicine is null)
                 {
-                    _logger.LogInformation($"The medicine {name} of user {userId} wasn't found");
+                    _logger.LogInformation($"The medicine {name} for user {userId} wasn't found");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
                 _repositoryManager.MedicineRepository.DeleteMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O remédio {name} do usuário {userId} foi excluído");
+                _logger.LogInformation($"The medicine {name} for user {userId} was deleted");
 
                 return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while deleting the medicine {name} of user {userId}");
+                _logger.LogError(ex, $"An error occurred while deleting the medicine {name} for user {userId}");
                 return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DELETE_ERROR);
             }
         }
@@ -138,7 +138,7 @@ namespace Medicines.Services
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving the medicines of user {userId}");
+                _logger.LogError(ex, $"An error occurred while retrieving the medicines for user {userId}");
                 return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_LIST_ERROR);
             }
         }
@@ -152,6 +152,8 @@ namespace Medicines.Services
                 if (medicine is not null)
                 {
                     var tz = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+                    medicine.PillsQuantity -= (int)(DateTimeOffset.UtcNow - medicine.RegisteredDate).TotalDays;
+                    medicine.PillsQuantity = Math.Max(0, medicine.PillsQuantity);
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
                 }
@@ -179,16 +181,12 @@ namespace Medicines.Services
                     medicine.ScheduledTime = TimeZoneInfo.ConvertTime(medicine.ScheduledTime, tz);
                     medicine.RegisteredDate = TimeZoneInfo.ConvertTime(medicine.RegisteredDate, tz);
                 }
-                else
-                {
-                    return Result<Medicine?, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
-                }
 
                 return Result<Medicine?, EMedicinesStatusCode>.Success(medicine);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving the medicine {name} of user {userId}");
+                _logger.LogError(ex, $"An error occurred while retrieving the medicine {name} for user {userId}");
                 return Result<Medicine?, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_GET_ERROR);
             }
         }
@@ -201,7 +199,7 @@ namespace Medicines.Services
 
                 if (medicine is null)
                 {
-                    _logger.LogInformation($"The medicine {name} of user {userId} wasn't found");
+                    _logger.LogInformation($"The medicine {name} for user {userId} wasn't found");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
@@ -216,13 +214,13 @@ namespace Medicines.Services
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O remédio {name} do usuário {userId} foi atualizado para {pillsQuantity} comprimidos e horário {scheduledTime:HH:mm}");
+                _logger.LogInformation($"The medicine {name} for user {userId} was updated to {pillsQuantity} pills and scheduled time {scheduledTime:HH:mm}");
 
                 return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while updating the medicine {name} of user {userId}");
+                _logger.LogError(ex, $"An error occurred while updating the medicine {name} for user {userId}");
                 return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR);
             }
         }
@@ -235,7 +233,7 @@ namespace Medicines.Services
 
                 if (medicine is null)
                 {
-                    _logger.LogInformation($"The medicine {name} of user {userId} wasn't found");
+                    _logger.LogInformation($"The medicine {name} for user {userId} wasn't found");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
@@ -249,13 +247,13 @@ namespace Medicines.Services
                 _repositoryManager.MedicineRepository.UpdateMedicine(medicine);
                 await _repositoryManager.SaveAsync();
 
-                _logger.LogInformation($"O horário do remédio {name} do usuário {userId} foi atualizado para {scheduledTime:HH:mm}");
+                _logger.LogInformation($"The scheduled time for medicine {name} for user {userId} was updated to {scheduledTime:HH:mm}");
 
                 return Result<bool, EMedicinesStatusCode>.Success(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while updating the scheduled time of the medicine {name} of user {userId}");
+                _logger.LogError(ex, $"An error occurred while updating the scheduled time of the medicine {name} for user {userId}");
                 return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_UPDATE_ERROR);
             }
         }
@@ -286,7 +284,7 @@ namespace Medicines.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving the medicines with few pills of user {userId}");
+                _logger.LogError(ex, $"An error occurred while retrieving the medicines with few pills for user {userId}");
                 return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_LIST_ERROR);
             }
         }
@@ -317,7 +315,7 @@ namespace Medicines.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving the medicines to take today of user {userId}");
+                _logger.LogError(ex, $"An error occurred while retrieving the medicines to take today for user {userId}");
                 return Result<IEnumerable<Medicine>, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_LIST_ERROR);
             }
         }
