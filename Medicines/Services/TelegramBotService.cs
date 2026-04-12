@@ -103,7 +103,7 @@ namespace Medicines.Services
 
             var text = msg.Text!.Trim();
 
-            var match = Regex.Match(text, @"^/add\s+(\w+)\s+(\d+)\s+(\d{2}):(\d{2})$");
+            var match = Regex.Match(text, @"^/add\s([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d+)\s+(\d{2}):(\d{2})$");
 
             var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
 
@@ -152,7 +152,7 @@ namespace Medicines.Services
 
             var text = msg.Text!.Trim();
 
-            var match = Regex.Match(text, @"^/remove\s+(\w+)$");
+            var match = Regex.Match(text, @"^/remove\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)$");
 
             var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
 
@@ -197,7 +197,7 @@ namespace Medicines.Services
 
             var text = msg.Text!.Trim();
 
-            var match = Regex.Match(text, @"^/lookup\s+(\w+)$");
+            var match = Regex.Match(text, @"^/lookup\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)$");
 
             var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
 
@@ -311,7 +311,7 @@ namespace Medicines.Services
 
             var text = msg.Text!.Trim();
 
-            var match = Regex.Match(text, @"^/pills\s+(\w+)\s+(\d+)$");
+            var match = Regex.Match(text, @"^/pills\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d+)$");
 
             if (match.Success)
             {
@@ -357,7 +357,7 @@ namespace Medicines.Services
 
             var text = msg.Text!.Trim();
 
-            var match = Regex.Match(text, @"^/schedule\s+(\w+)\s+(\d{2}):(\d{2})$");
+            var match = Regex.Match(text, @"^/schedule\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d{2}):(\d{2})$");
 
             if (match.Success)
             {
@@ -405,7 +405,7 @@ namespace Medicines.Services
 
             var text = msg.Text!.Trim();
 
-            var match = Regex.Match(text, @"^/update\s+(\w+)\s+(\d+)\s+(\d{2}):(\d{2})$");
+            var match = Regex.Match(text, @"^/update\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d+)\s+(\d{2}):(\d{2})$");
 
             if (match.Success)
             {

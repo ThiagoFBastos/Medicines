@@ -28,7 +28,7 @@ namespace Medicines.Models
 
         public bool IsValid()
         {
-            var match = Regex.Match(Name, @"^[A-Za-z\s]+$");
+            var match = Regex.Match(Name, @"^[\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*$");
 
             return !string.IsNullOrEmpty(Name) && PillsQuantity >= 0 && match.Success && ScheduledTime.Offset == TimeSpan.Zero && RegisteredDate.Offset == TimeSpan.Zero;
         }
