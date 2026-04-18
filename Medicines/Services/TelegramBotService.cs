@@ -1,4 +1,5 @@
-﻿using Medicines.Interfaces;
+﻿using Medicines.Commands;
+using Medicines.Interfaces;
 using Medicines.Models;
 using Medicines.Utils;
 using Microsoft.Extensions.Options;
@@ -21,8 +22,9 @@ namespace Medicines.Services
         private readonly TelegramBotOptions _options;
         private readonly IMedicinesService _medicinesService;
         private readonly IUserService _userService;
+        private readonly ICommandExtraction _commandExtraction;
 
-        public TelegramBotService(ILogger<TelegramBotService> logger, IOptions<TelegramBotOptions> options, IMedicinesService medicinesService, IUserService userService)
+        public TelegramBotService(ILogger<TelegramBotService> logger, IOptions<TelegramBotOptions> options, IMedicinesService medicinesService, IUserService userService, ICommandExtraction commandExtraction)
         {
             _logger = logger;
             _cts = new CancellationTokenSource();
@@ -34,9 +36,10 @@ namespace Medicines.Services
             _bot.OnUpdate += OnUpdate;
             _medicinesService = medicinesService;
             _userService = userService;
+            _commandExtraction = commandExtraction;
         }
 
-        private async Task Help(Chat chat)
+        private async Task Help(Chat chat, UpdateType type, HelpCommand helpCommand)
         {
             await _bot.SendHtml(chat, """
             Os seguintes comandos estão disponíveis:
@@ -53,57 +56,42 @@ namespace Medicines.Services
             """);
         }
 
-        private async Task StartAsync(Message msg, UpdateType type)
+        private async Task StartAsync(Message msg, UpdateType type, StartCommand startCommand)
         {
             if (msg is null)
                 return;
 
-            var text = msg.Text!.Trim();
+            var username = startCommand.Username;
 
-            var match = Regex.Match(text, @"^/start\s+([A-Za-z0-9\._]+)$");
+            var result = await _userService.AddUserAsync(msg.From!.Id, username);
 
-            if (match.Success)
+            if (result.IsSuccess)
             {
-                var username = match.Groups[1].Value;
-
-                var result = await _userService.AddUserAsync(msg.From!.Id, username);
-
-                if (result.IsSuccess)
-                {
-                    await _bot.SendMessage(msg.Chat, $"Seja bem vindo ao Medicines, {username}!");
-                }
-                else
-                {
-                    var resultUser = await _userService.GetUserByUserIdAsync(msg.From!.Id);
-
-                    if (resultUser.IsSuccess)
-                    {
-                        var user = resultUser.Value;
-                        var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
-
-                        await _bot.SendMessage(msg.Chat, $"{user!.Username}, {errorDetails}!");
-                    }
-                    else
-                    {
-                        var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
-                        await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
-                    }
-                }
+                await _bot.SendMessage(msg.Chat, $"Seja bem vindo ao Medicines, {username}!");
             }
             else
             {
-                await Help(msg.Chat);
+                var resultUser = await _userService.GetUserByUserIdAsync(msg.From!.Id);
+
+                if (resultUser.IsSuccess)
+                {
+                    var user = resultUser.Value;
+                    var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+
+                    await _bot.SendMessage(msg.Chat, $"{user!.Username}, {errorDetails}!");
+                }
+                else
+                {
+                    var errorDetails = UserStatusCodeTranslator.TranslateUserStatusCode(result.Error);
+                    await _bot.SendMessage(msg.Chat, $"Ocorreu um erro ao recuperar as informações do usuário com id {msg.From.Id}\nMotivo: {errorDetails}");
+                }
             }
         }
 
-        private async Task AddAsync(Message msg, UpdateType type)
+        private async Task AddAsync(Message msg, UpdateType type, AddCommand addCommand)
         {
             if (msg is null)
                 return;
-
-            var text = msg.Text!.Trim();
-
-            var match = Regex.Match(text, @"^/add\s([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d+)\s+(\d{2}):(\d{2})$");
 
             var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
 
@@ -119,40 +107,29 @@ namespace Medicines.Services
 
             var username = user?.Username ?? "Usuário";
 
-            if (match.Success)
+            string medicine = addCommand.Medicine;
+            int quantity = addCommand.PillsQuantity;
+            int hours = addCommand.Hours;
+            int minutes = addCommand.Minutes;
+            var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
+
+            var addResult = await _medicinesService.AddMedicineAsync(medicine, quantity, scheduledTime.ToUniversalTime(), msg.From!.Id);
+
+            if(addResult.IsSuccess)
             {
-                string medicine = match.Groups[1].Value;
-                int quantity = int.Parse(match.Groups[2].Value);
-                int hours = int.Parse(match.Groups[3].Value);
-                int minutes = int.Parse(match.Groups[4].Value);
-                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
-
-                var addResult = await _medicinesService.AddMedicineAsync(medicine, quantity, scheduledTime.ToUniversalTime(), msg.From!.Id);
-
-                if(addResult.IsSuccess)
-                {
-                    await _bot.SendMessage(msg.Chat, $"{username}, você adicionou o remédio {medicine} com quantidade {quantity} no horário {scheduledTime:HH:mm}");
-                }
-                else
-                {
-                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(addResult.Error, medicine);
-                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
-                }
+                await _bot.SendMessage(msg.Chat, $"{username}, você adicionou o remédio {medicine} com quantidade {quantity} no horário {scheduledTime:HH:mm}");
             }
             else
             {
-                await Help(msg.Chat);
-            }
+                var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(addResult.Error, medicine);
+                await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
+            }   
         }
 
-        private async Task RemoveAsync(Message msg, UpdateType type)
+        private async Task RemoveAsync(Message msg, UpdateType type, RemoveCommand removeCommand)
         {
             if (msg is null)
                 return;
-
-            var text = msg.Text!.Trim();
-
-            var match = Regex.Match(text, @"^/remove\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)$");
 
             var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
 
@@ -168,36 +145,25 @@ namespace Medicines.Services
 
             var username = user?.Username ?? "Usuário";
 
-            if (match.Success)
+            string medicine = removeCommand.Medicine;
+
+            var deleteResult = await _medicinesService.DeleteMedicineAsync(medicine, msg.From.Id);
+
+            if (deleteResult.IsSuccess)
             {
-                string medicine = match.Groups[1].Value;
-
-                var deleteResult = await _medicinesService.DeleteMedicineAsync(medicine, msg.From.Id);
-
-                if (deleteResult.IsSuccess)
-                {
-                    await _bot.SendMessage(msg.Chat, $"{username}, você removeu o remédio {medicine}");
-                }
-                else
-                {
-                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(deleteResult.Error, medicine);
-                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
-                }
+                await _bot.SendMessage(msg.Chat, $"{username}, você removeu o remédio {medicine}");
             }
             else
             {
-                await Help(msg.Chat);
+                var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(deleteResult.Error, medicine);
+                await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
             }
         }
 
-        private async Task LookupAsync(Message msg, UpdateType type)
+        private async Task LookupAsync(Message msg, UpdateType type, LookupCommand lookupCommand)
         {
             if (msg is null)
                 return;
-
-            var text = msg.Text!.Trim();
-
-            var match = Regex.Match(text, @"^/lookup\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)$");
 
             var result = await _userService.GetUserByUserIdAsync(msg.From!.Id);
 
@@ -212,37 +178,30 @@ namespace Medicines.Services
             var user = result.Value;
 
             var username = user?.Username ?? "Usuário";
+           
+            string medicine = lookupCommand.Medicine;
 
-            if (match.Success)
+            var getResult = await _medicinesService.GetMedicineByNameAsync(medicine, msg.From!.Id);
+
+            if (getResult.IsSuccess)
             {
-                string medicine = match.Groups[1].Value;
+                var medicineInfo = getResult.Value;
 
-                var getResult = await _medicinesService.GetMedicineByNameAsync(medicine, msg.From!.Id);
-
-                if (getResult.IsSuccess)
-                {
-                    var medicineInfo = getResult.Value;
-
-                    await _bot.SendHtml(msg.Chat, $"""
-                       {username}, você procurou pelo remédio {medicine}:
-                       • <b>Nome:</b> {medicineInfo?.Name}
-                       • <b>Quantidade:</b> {medicineInfo?.PillsQuantity}
-                       • <b>Horário:</b> {medicineInfo?.ScheduledTime:HH:mm}
-                    """);
-                }
-                else
-                {
-                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(getResult.Error, medicine);
-                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
-                }
+                await _bot.SendHtml(msg.Chat, $"""
+                    {username}, você procurou pelo remédio {medicine}:
+                    • <b>Nome:</b> {medicineInfo?.Name}
+                    • <b>Quantidade:</b> {medicineInfo?.PillsQuantity}
+                    • <b>Horário:</b> {medicineInfo?.ScheduledTime:HH:mm}
+                """);
             }
             else
             {
-                await Help(msg.Chat);
+                var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(getResult.Error, medicine);
+                await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
             }
         }
 
-        private async Task ListAsync(Message msg, UpdateType type)
+        private async Task ListAsync(Message msg, UpdateType type, ListCommand listCommand)
         {
             if (msg is null)
                 return;
@@ -290,7 +249,7 @@ namespace Medicines.Services
             }
         }
 
-        private async Task PillsAsync(Message msg, UpdateType update)
+        private async Task PillsAsync(Message msg, UpdateType update, PillsCommand pillsCommand)
         {
             if (msg is null)
                 return;
@@ -309,34 +268,23 @@ namespace Medicines.Services
 
             var username = user?.Username ?? "Usuário";
 
-            var text = msg.Text!.Trim();
+            string medicine = pillsCommand.Medicine;
+            int pills = pillsCommand.PillsQuantity;
 
-            var match = Regex.Match(text, @"^/pills\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d+)$");
+            var addPillsResult = await _medicinesService.AddMedicinePillsAsync(medicine, pills, msg.From!.Id);
 
-            if (match.Success)
+            if (addPillsResult.IsSuccess)
             {
-                string medicine = match.Groups[1].Value;
-                int pills = int.Parse(match.Groups[2].Value);
-
-                var addPillsResult = await _medicinesService.AddMedicinePillsAsync(medicine, pills, msg.From!.Id);
-
-                if (addPillsResult.IsSuccess)
-                {
-                    await _bot.SendMessage(msg.Chat, $"{username}, {pills} comprimidos do remédio {medicine} foram adicionados");
-                }
-                else
-                {
-                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(addPillsResult.Error, medicine);
-                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
-                }
+                await _bot.SendMessage(msg.Chat, $"{username}, {pills} comprimidos do remédio {medicine} foram adicionados");
             }
             else
             {
-                await Help(msg.Chat);
+                var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(addPillsResult.Error, medicine);
+                await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
             }
         }
 
-        private async Task ScheduleAsync(Message msg, UpdateType update)
+        private async Task ScheduleAsync(Message msg, UpdateType update, ScheduleCommand scheduleCommand)
         {
             if (msg is null)
                 return;
@@ -355,36 +303,25 @@ namespace Medicines.Services
 
             var username = user?.Username ?? "Usuário";
 
-            var text = msg.Text!.Trim();
+            string medicine = scheduleCommand.Medicine;
+            int hours = scheduleCommand.Hours;
+            int minutes = scheduleCommand.Minutes;
+            var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
 
-            var match = Regex.Match(text, @"^/schedule\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d{2}):(\d{2})$");
+            var updateScheduleResult = await _medicinesService.UpdateMedicineScheduledTime(medicine, scheduledTime.ToUniversalTime(), msg.From!.Id);
 
-            if (match.Success)
+            if (updateScheduleResult.IsSuccess)
             {
-                string medicine = match.Groups[1].Value;
-                int hours = int.Parse(match.Groups[2].Value);
-                int minutes = int.Parse(match.Groups[3].Value);
-                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
-
-                var updateScheduleResult = await _medicinesService.UpdateMedicineScheduledTime(medicine, scheduledTime.ToUniversalTime(), msg.From!.Id);
-
-                if (updateScheduleResult.IsSuccess)
-                {
-                    await _bot.SendMessage(msg.Chat, $"{username}, o horário do remédio {medicine} foi atualizado para {scheduledTime:HH:mm}");
-                }
-                else
-                {
-                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(updateScheduleResult.Error, medicine);
-                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
-                }
+                await _bot.SendMessage(msg.Chat, $"{username}, o horário do remédio {medicine} foi atualizado para {scheduledTime:HH:mm}");
             }
             else
             {
-                await Help(msg.Chat);
+                var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(updateScheduleResult.Error, medicine);
+                await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
             }
         }
 
-        private async Task UpdateAsync(Message msg, UpdateType update)
+        private async Task UpdateAsync(Message msg, UpdateType update, UpdateCommand updateCommand)
         {
             if (msg is null)
                 return;
@@ -403,34 +340,23 @@ namespace Medicines.Services
 
             var username = user?.Username ?? "Usuário";
 
-            var text = msg.Text!.Trim();
+            string medicine = updateCommand.Medicine;
+            int pillsQuantity = updateCommand.PillsQuantity;
+            int hours = updateCommand.Hours;
+            int minutes = updateCommand.Minutes;
 
-            var match = Regex.Match(text, @"^/update\s+([\p{L}][\p{L}\d]*(?:\s+[\p{L}][\p{L}\d]*)*)\s+(\d+)\s+(\d{2}):(\d{2})$");
+            var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
 
-            if (match.Success)
+            var updateResult = await _medicinesService.UpdateMedicineAsync(medicine, pillsQuantity, scheduledTime.ToUniversalTime(), msg.From!.Id);
+
+            if (updateResult.IsSuccess)
             {
-                string medicine = match.Groups[1].Value;
-                int pillsQuantity = int.Parse(match.Groups[2].Value);
-                int hours = int.Parse(match.Groups[3].Value);
-                int minutes = int.Parse(match.Groups[4].Value);
-
-                var scheduledTime = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.FromHours(-3)) + new TimeSpan(hours, minutes, 0);
-
-                var updateResult = await _medicinesService.UpdateMedicineAsync(medicine, pillsQuantity, scheduledTime.ToUniversalTime(), msg.From!.Id);
-
-                if (updateResult.IsSuccess)
-                {
-                    await _bot.SendMessage(msg.Chat, $"{username}, o remédio {medicine} foi atualizado com quantidade {pillsQuantity} e horário {scheduledTime:HH:mm}");
-                }
-                else
-                {
-                    var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(updateResult.Error, medicine);
-                    await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
-                }
+                await _bot.SendMessage(msg.Chat, $"{username}, o remédio {medicine} foi atualizado com quantidade {pillsQuantity} e horário {scheduledTime:HH:mm}");
             }
             else
             {
-                await Help(msg.Chat);
+                var errorDetails = MedicinesStatusCodeTranslator.TranslateStatusCode(updateResult.Error, medicine);
+                await _bot.SendMessage(msg.Chat, $"{username}, {errorDetails}");
             }
         }
 
@@ -450,48 +376,19 @@ namespace Medicines.Services
 
             try
             {
-                string text = msg.Text.Trim();
-
-                if (text.StartsWith("/start"))
-                {
-                    await StartAsync(msg, type);
-                }
-                else if (text.StartsWith("/add"))
-                {
-                    await AddAsync(msg, type);
-                }
-                else if (text.StartsWith("/remove"))
-                {
-                    await RemoveAsync(msg, type);
-                }
-                else if (text.StartsWith("/lookup"))
-                {
-                    await LookupAsync(msg, type);
-                }
-                else if (text.StartsWith("/list"))
-                {
-                    await ListAsync(msg, type);
-                }
-                else if (text.StartsWith("/pills"))
-                {
-                    await PillsAsync(msg, type);
-                }
-                else if(text.StartsWith("/schedule"))
-                {
-                    await ScheduleAsync(msg, type);
-                }
-                else if(text.StartsWith("/update"))
-                {
-                    await UpdateAsync(msg, type);
-                }
-                else if (text.StartsWith("/help"))
-                {
-                    await Help(msg.Chat);
-                }
-                else
-                {
-                    await Help(msg.Chat);
-                }
+                await (_commandExtraction.Extract(msg.Text) switch
+                {   
+                    StartCommand start => StartAsync(msg, type, start),
+                    AddCommand add => AddAsync(msg, type, add),
+                    RemoveCommand remove => RemoveAsync(msg, type, remove),
+                    LookupCommand lookup => LookupAsync(msg, type, lookup),
+                    ListCommand list => ListAsync(msg, type, list),
+                    PillsCommand pills => PillsAsync(msg, type, pills),
+                    ScheduleCommand schedule => ScheduleAsync(msg, type, schedule),
+                    UpdateCommand update => UpdateAsync(msg, type, update),
+                    HelpCommand help => Help(msg.Chat, type, help),
+                    _ => Help(msg.Chat, type, new HelpCommand())
+                });
             }
             catch (Exception exception)
             {

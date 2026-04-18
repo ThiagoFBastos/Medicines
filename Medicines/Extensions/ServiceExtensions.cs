@@ -31,5 +31,8 @@ namespace Medicines.Extensions
 
         public static void ConfigureSqlContext(this IServiceCollection services, IConfiguration configuration)
             => services.AddDbContext<RepositoryContext>(options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        public static void ConfigureCommandExtractionService(this IServiceCollection services)
+            => services.AddScoped<ICommandExtraction, CommandExtraction>();
     }
 }
