@@ -45,7 +45,7 @@ namespace Medicines.Services
             Os seguintes comandos estão disponíveis:
 
             • <b>/start [username]</b> - Inicia a interação com o bot e registra o usuário com o nome de usuário especificado.
-            • <b>/add [remédio] [quantidade] [horário] </b> - Adiciona um remédio com a quantidade especificada e um horário para tomar.
+            • <b>/add [remédio] [quantidade] [horário]</b> - Adiciona um remédio com a quantidade especificada e um horário para tomar.
             • <b>/remove [remédio]</b> - Remove um remédio da lista.
             • <b>/lookup [remédio]</b> - Procura por um remédio específico.
             • <b>/list</b> - Exibe a lista de remédios.

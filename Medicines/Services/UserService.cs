@@ -41,6 +41,7 @@ namespace Medicines.Services
 
                 if (!user.IsValid())
                 {
+                    _logger.LogWarning($"User with userId {userId} isn't valid.");
                     return Result<bool, EUserStatusCode>.Failure(EUserStatusCode.USER_DATA_INVALID);
                 }
 
@@ -131,6 +132,7 @@ namespace Medicines.Services
 
                 if (!user.IsValid())
                 {
+                    _logger.LogWarning($"User with userId {userId} isn't valid.");
                     return Result<bool, EUserStatusCode>.Failure(EUserStatusCode.USER_DATA_INVALID);
                 }
 

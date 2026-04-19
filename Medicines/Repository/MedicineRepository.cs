@@ -27,7 +27,7 @@ namespace Medicines.Repository
             => FindByCondition(med => med.Id == id).FirstOrDefaultAsync();
 
         public Task<Medicine?> GetMedicineByNameAsync(string name, long userId)
-            => FindByCondition(med => med.Name == name.ToLower() && med.UserId == userId)
+            => FindByCondition(med => med.Name.ToLower() == name.ToLower() && med.UserId == userId)
                .FirstOrDefaultAsync();
 
         public Task<IEnumerable<Medicine>> GetAllMedicinesAsync(long userId)
