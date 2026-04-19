@@ -15,6 +15,7 @@ namespace MedicinesTests
         [InlineData("/start")]
         [InlineData("/start user test")]
         [InlineData("/startusertest")]
+        [InlineData("")]
         public void StartCommandInvalidTest(string command)
         {
             var commandExtraction = new CommandExtraction();
@@ -61,7 +62,9 @@ namespace MedicinesTests
         public void AddCommandInvalidTest(string command)
         {
             var commandExtraction = new CommandExtraction();
+
             var result = commandExtraction.Extract(command);
+
             Assert.IsType<UnknownCommand>(result);
         }
 
@@ -82,7 +85,6 @@ namespace MedicinesTests
             var add = result as AddCommand;
 
             Assert.NotNull(add);
-
             Assert.Equal(add.Medicine, medicine);
             Assert.Equal(add.PillsQuantity, pillsQuantitity);
             Assert.Equal(add.Hours, hours);
