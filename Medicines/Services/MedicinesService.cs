@@ -69,6 +69,9 @@ namespace Medicines.Services
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
+                int days = (int)(DateTimeOffset.UtcNow - medicine.RegisteredDate).TotalDays;
+
+                medicine.PillsQuantity += Math.Max(0, days - medicine.PillsQuantity);
                 medicine.PillsQuantity += pillsQuantity;
 
                 if(!medicine.IsValid())
