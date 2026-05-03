@@ -39,6 +39,7 @@ namespace Medicines.Services
 
                 if(!medicine.IsValid())
                 {
+                    _logger.LogInformation($"The medicine {name} for user {userId} isn't valid");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 
@@ -64,14 +65,18 @@ namespace Medicines.Services
 
                 if (medicine is null)
                 {
-                    
+                    _logger.LogInformation($"The medicine {name} for user {userId} wasn't found");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_NOT_FOUND);
                 }
 
+                int days = (int)(DateTimeOffset.UtcNow - medicine.RegisteredDate).TotalDays;
+
+                medicine.PillsQuantity += Math.Max(0, days - medicine.PillsQuantity);
                 medicine.PillsQuantity += pillsQuantity;
 
                 if(!medicine.IsValid())
                 {
+                    _logger.LogInformation($"The medicine {name} for user {userId} isn't valid");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 
@@ -208,6 +213,7 @@ namespace Medicines.Services
 
                 if (!medicine.IsValid())
                 {
+                    _logger.LogInformation($"The medicine {name} for user {userId} isn't valid");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 
@@ -241,6 +247,7 @@ namespace Medicines.Services
 
                 if (!medicine.IsValid())
                 {
+                    _logger.LogInformation($"The medicine {name} for user {userId} isn't valid");
                     return Result<bool, EMedicinesStatusCode>.Failure(EMedicinesStatusCode.MEDICINE_DATA_INVALID);
                 }
 

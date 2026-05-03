@@ -26,7 +26,7 @@ namespace Medicines.Models
         {
             var match = Regex.Match(Username, @"^[A-Za-z0-9\._]+$");
 
-            return !string.IsNullOrEmpty(Username) && match.Success && Username.Length <= 50;
+            return !string.IsNullOrEmpty(Username) && match.Success && Username.Length <= 50 && registeredDate.Offset == TimeSpan.Zero;
         }
     }
 }

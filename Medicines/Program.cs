@@ -16,6 +16,7 @@ namespace Medicines
             builder.Services.ConvigureMedicinesService();
             builder.Services.ConfigureUserService();
             builder.Services.ConfigureSqlContext(builder.Configuration);
+            builder.Services.ConfigureCommandExtractionService();
 
             var host = builder.Build();
 
